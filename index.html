@@ -502,74 +502,6 @@
     </div>
 
     <script type="text/javascript">
-        // DOM elements
-        const proxiesDiv = document.getElementById('proxies');
-        const proxyCountSpan = document.getElementById('proxyCount');
-        const lastUpdatedDateSpan = document.getElementById('lastUpdatedDate');
-        const loadingMoreDiv = document.getElementById('loadingMore');
-        const protocolFilterSelect = document.getElementById('protocolFilter');
-        const countryFilterSelect = document.getElementById('countryFilter');
-        const updateButton = document.getElementById('updateButton');
-        const copyAllButton = document.getElementById('copyAllButton');
-        const loadingSpinner = document.getElementById('loading');
-        const progressBar = document.getElementById('progressBar');
-        const currentSourceSpan = document.getElementById('currentSource');
-        const elapsedTimeSpan = document.getElementById('elapsedTime');
-        const progressSection = document.getElementById('progressSection');
-        const messageBox = document.getElementById('messageBox');
-        const qrModal = document.getElementById('qrModal');
-        const qrModalClose = document.getElementById('qrModalClose');
-        const qrCanvas = document.getElementById('qrCanvas');
-
-        let allConfigurations = [];
-        let filteredConfigurations = [];
-        let currentProxyIndex = 0;
-        const proxiesPerLoad = 20;
-        let isLoading = false;
-        let timerInterval;
-
-        const CACHE_KEY = 'v2ray_configs_cache';
-        const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-        // List of V2Ray/Xray URLs to fetch
-        const directUrls = [
-            "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt",
-            "https://raw.githubusercontent.com/sinabigo/Xray/main/@sinavm",
-            "https://raw.githubusercontent.com/Ashkan-m/v2ray/main/Sub.txt",
-            "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity.txt",
-            "https://raw.githubusercontent.com/4n0nymou3/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt",
-            "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_Sub.txt",
-            "https://raw.githubusercontent.com/ircfspace/warpsub/main/export/warp",
-            "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/V2Ray-Config-By-EbraSha-All-Type.txt",
-            "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/V2Ray-Config-By-EbraSha.txt",
-            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vmess.txt",
-            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vless.txt",
-            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/trojan.txt",
-            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/ss.txt",
-        ];
-
-        const base64Urls = [
-            "https://raw.githubusercontent.com/imyebekhe/vpn-fail/refs/heads/main/sub-link",
-            "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
-            "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity",
-            "https://raw.githubusercontent.com/Pawdroid/Free-servers/refs/heads/main/sub",
-            "https://proxy.v2gh.com/https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
-            "https://raw.githubusercontent.com/AzadNetCH/Clash/main/AzadNet.txt",
-            "https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/app/sub.txt",
-        ];
-
-        // Add ranged URLs
-        for (let i = 1; i <= 39; i++) {
-            directUrls.push(`https://raw.githubusercontent.com/barry-far/V2ray-Config/main/Sub${i}.txt`);
-        }
-        for (let i = 1; i <= 44; i++) {
-            directUrls.push(`https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/Sub${i}.txt`);
-        }
-        for (let i = 1; i <= 4; i++) {
-            base64Urls.push(`https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/mtn/sub_${i}.txt`);
-            base64Urls.push(`https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/mci/sub_${i}.txt`);
-        }
-
         // List of countries for detection and display.
         // These are the "clean" names that getCountry will return.
         const countries = [
@@ -587,35 +519,6 @@
             "United Kingdom", "United States", "Unknown",
             "Vietnam"
         ];
-        // Add country-specific URLs to directUrls, using the underscored version for the URL path
-        countries.filter(c => c !== "Unknown").forEach(country => {
-            directUrls.push(`https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/${country.replace(/ /g, '_')}.txt`);
-        });
-
-        // Combined list of all URLs to fetch
-        const allFetchUrls = [];
-        const processedUrls = new Set();
-
-        directUrls.forEach(url => {
-            const rawUrl = convertToRawUrl(url.split('#')[0]);
-            if (!processedUrls.has(rawUrl)) {
-                allFetchUrls.push({ url: rawUrl, decode: false });
-                processedUrls.add(rawUrl);
-            }
-        });
-
-        base64Urls.forEach(url => {
-            const rawUrl = convertToRawUrl(url.split('#')[0]);
-            if (!processedUrls.has(rawUrl)) {
-                allFetchUrls.push({ url: rawUrl, decode: true });
-                processedUrls.add(rawUrl);
-            } else {
-                const existingEntry = allFetchUrls.find(entry => entry.url === rawUrl);
-                if (existingEntry) {
-                    existingEntry.decode = true;
-                }
-            }
-        });
 
         // Mapping of country names (exactly as returned by getCountry) to 2-letter ISO codes for flags
         const countryCodeMap = {
@@ -663,6 +566,41 @@
             "tw": "تایوان", "th": "تایلند", "nl": "هلند", "tr": "ترکیه", "ua": "اوکراین", "ae": "امارات متحده عربی",
             "gb": "بریتانیا", "us": "ایالات متحده", "vn": "ویتنام", "unknown": "نامعلوم"
         };
+
+
+        // DOM elements
+        const proxiesDiv = document.getElementById('proxies');
+        const proxyCountSpan = document.getElementById('proxyCount');
+        const lastUpdatedDateSpan = document.getElementById('lastUpdatedDate');
+        const loadingMoreDiv = document.getElementById('loadingMore');
+        const protocolFilterSelect = document.getElementById('protocolFilter');
+        const countryFilterSelect = document.getElementById('countryFilter');
+        const updateButton = document.getElementById('updateButton');
+        const copyAllButton = document.getElementById('copyAllButton');
+        const loadingSpinner = document.getElementById('loading');
+        const progressBar = document.getElementById('progressBar');
+        const currentSourceSpan = document.getElementById('currentSource');
+        const elapsedTimeSpan = document.getElementById('elapsedTime');
+        const progressSection = document.getElementById('progressSection');
+        const messageBox = document.getElementById('messageBox');
+        const qrModal = document.getElementById('qrModal');
+        const qrModalClose = document.getElementById('qrModalClose');
+        const qrCanvas = document.getElementById('qrCanvas');
+
+        let allConfigurations = [];
+        let filteredConfigurations = [];
+        let currentProxyIndex = 0;
+        const proxiesPerLoad = 20;
+        let isLoading = false;
+        let timerInterval;
+
+        const CACHE_KEY = 'v2ray_configs_cache';
+        const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        // List of V2Ray/Xray URLs to fetch - ONLY IRAN.TXT SOURCE
+        const allFetchUrls = [
+            { url: "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/Iran.txt", decode: false, sourceCountry: 'Iran' },
+        ];
 
 
         /**
@@ -858,47 +796,36 @@
 
 
         /**
-         * Performs a basic client-side validation of the config string.
-         * This does NOT perform a network connectivity test through the proxy.
+         * Sends the config to the backend for real testing and displays the result.
          * @param {string} configString - The V2Ray/Xray config string.
          */
         async function testConfig(configString) {
-            const protocol = getProtocol(configString);
-            let isValid = false;
-            let message = '';
-
-            showMessage('در حال تست کانفیگ...', 'info'); // Show testing in progress message
-
-            // Simulate network delay
-            await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 seconds delay
-
+            showMessage('در حال تست کانفیگ... لطفا صبر کنید', 'info');
             try {
-                if (protocol === 'vmess' || protocol === 'vless') {
-                    const base64Part = configString.substring(protocol.length + 3);
-                    let decodedJson = '';
-                    try {
-                        decodedJson = LZString.decompressFromBase64(base64Part);
-                    } catch (e) {
-                        decodedJson = atob(base64Part);
-                    }
-                    JSON.parse(decodedJson); // Just try to parse to see if it's valid JSON
-                    isValid = true;
-                    message = `کانفیگ ${protocol.toUpperCase()} معتبر است.`;
-                } else if (protocol === 'trojan' || protocol === 'ss' || protocol === 'ssr' || protocol === 'warp') {
-                    // For these, a basic check is just if it matches the protocol prefix
-                    isValid = true; // Assume valid if it has the correct prefix
-                    message = `کانفیگ ${protocol.toUpperCase()} معتبر است.`;
-                } else {
-                    message = 'پروتکل ناشناخته یا کانفیگ نامعتبر.';
-                }
-            } catch (e) {
-                isValid = false;
-                message = `کانفیگ نامعتبر یا خراب است: ${e.message}`;
-            }
+                const response = await fetch('/api/test-config', { // This is your hypothetical Vercel Serverless Function endpoint
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ config: configString }),
+                });
 
-            showMessage(message, isValid ? 'success' : 'error', true); // Pass true to show the test site button
-            // Always show the disclaimer about full test capability
-            showMessage('توجه: تست کامل اتصال نیازمند برنامه کلاینت V2Ray/Xray است.', 'info');
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'خطا در برقراری ارتباط با بک‌اند تست.');
+                }
+
+                const result = await response.json();
+                if (result.status === 'active') {
+                    showMessage(`کانفیگ فعال است! پینگ: ${result.pingMs}ms`, 'success');
+                } else {
+                    showMessage(`کانفیگ غیرفعال است. دلیل: ${result.reason || 'نامشخص'}`, 'error', true); // Show test site button for inactive
+                }
+
+            } catch (error) {
+                console.error('Error during config test:', error);
+                showMessage(`خطا در تست کانفیگ: ${error.message}.`, 'error', true); // Always show test site button on error
+            }
         }
 
         /**
@@ -1129,7 +1056,7 @@
                     const emojiSpan = document.createElement('span');
                     // Simple emoji mapping for common flags, or a generic globe
                     const emojiMap = {
-                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦�",
+                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
                         "ae": "🇦🇪", "nl": "🇳🇱", "sg": "🇸🇬", "in": "🇮🇳", "br": "🇧🇷", "ua": "🇺🇦", "tr": "🇹🇷", "se": "🇸🇪", "fi": "🇫🇮", "no": "🇳🇴",
                         "ch": "🇨🇭", "es": "🇪🇸", "it": "🇮🇹", "pl": "🇵🇱", "cz": "🇨🇿", "za": "🇿🇦", "kr": "🇰🇷", "hk": "🇭🇰", "id": "🇮🇩", "vn": "🇻🇳",
                         "th": "🇹🇭", "my": "🇲🇾", "ph": "🇵🇭", "mx": "🇲🇽", "ar": "🇦🇷", "cl": "🇨🇱", "co": "🇨🇴", "pe": "🇵🇪", "eg": "🇪🇬", "sa": "🇸🇦",
@@ -1208,7 +1135,9 @@
             instructionsDiv.innerHTML = `
                 <p><strong>راهنمای استفاده:</strong></p>
                 <ul>
-                    <li>برای تست کامل کانفیگ، روی دکمه "تست" کلیک کرده و به صفحه تست بروید. کانفیگ را در فیلد مربوطه وارد کنید، سرویس‌دهنده اینترنت خود را انتخاب و "جستجو از منابع دیگر" را بزنید. سپس در لیست IPها، با پینگ فعال بودن کانفیگ را بررسی و استفاده کنید.</li>
+                    <li>کانفیگ را با دکمه "📋 کپی لینک" کپی کنید.</li>
+                    <li>برای تست واقعی (پینگ و فعال بودن)، روی "⚡ تست کانفیگ" کلیک کنید.</li>
+                    <li>برای اسکن با گوشی، روی "📸 نمایش QR کد" کلیک کنید.</li>
                 </ul>
             `;
             card.appendChild(instructionsDiv);
@@ -1399,4 +1328,3 @@
     </script>
 </body>
 </html>
-�
