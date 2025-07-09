@@ -597,10 +597,74 @@
         const CACHE_KEY = 'v2ray_configs_cache';
         const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
 
-        // List of V2Ray/Xray URLs to fetch - ONLY IRAN.TXT SOURCE
-        const allFetchUrls = [
-            { url: "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/Iran.txt", decode: false, sourceCountry: 'Iran' },
+        // List of V2Ray/Xray URLs to fetch
+        const directUrls = [
+            "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt",
+            "https://raw.githubusercontent.com/sinabigo/Xray/main/@sinavm",
+            "https://raw.githubusercontent.com/Ashkan-m/v2ray/main/Sub.txt",
+            "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity.txt",
+            "https://raw.githubusercontent.com/4n0nymou3/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt",
+            "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_Sub.txt",
+            "https://raw.githubusercontent.com/ircfspace/warpsub/main/export/warp",
+            "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/V2Ray-Config-By-EbraSha-All-Type.txt",
+            "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/V2Ray-Config-By-EbraSha.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vmess.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vless.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/trojan.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/ss.txt",
         ];
+
+        const base64Urls = [
+            "https://raw.githubusercontent.com/imyebekhe/vpn-fail/refs/heads/main/sub-link",
+            "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
+            "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity",
+            "https://raw.githubusercontent.com/Pawdroid/Free-servers/refs/heads/main/sub",
+            "https://proxy.v2gh.com/https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
+            "https://raw.githubusercontent.com/AzadNetCH/Clash/main/AzadNet.txt",
+            "https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/app/sub.txt",
+        ];
+
+        // Add ranged URLs
+        for (let i = 1; i <= 39; i++) {
+            directUrls.push(`https://raw.githubusercontent.com/barry-far/V2ray-Config/main/Sub${i}.txt`);
+        }
+        for (let i = 1; i <= 44; i++) {
+            directUrls.push(`https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/Sub${i}.txt`);
+        }
+        for (let i = 1; i <= 4; i++) {
+            base64Urls.push(`https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/mtn/sub_${i}.txt`);
+            base64Urls.push(`https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/mci/sub_${i}.txt`);
+        }
+
+        // Add country-specific URLs to directUrls, using the underscored version for the URL path
+        countries.filter(c => c !== "Unknown").forEach(country => {
+            directUrls.push(`https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/${country.replace(/ /g, '_')}.txt`);
+        });
+
+        // Combined list of all URLs to fetch
+        const allFetchUrls = [];
+        const processedUrls = new Set();
+
+        directUrls.forEach(url => {
+            const rawUrl = convertToRawUrl(url.split('#')[0]);
+            if (!processedUrls.has(rawUrl)) {
+                allFetchUrls.push({ url: rawUrl, decode: false });
+                processedUrls.add(rawUrl);
+            }
+        });
+
+        base64Urls.forEach(url => {
+            const rawUrl = convertToRawUrl(url.split('#')[0]);
+            if (!processedUrls.has(rawUrl)) {
+                allFetchUrls.push({ url: rawUrl, decode: true });
+                processedUrls.add(rawUrl);
+            } else {
+                const existingEntry = allFetchUrls.find(entry => entry.url === rawUrl);
+                if (existingEntry) {
+                    existingEntry.decode = true;
+                }
+            }
+        });
 
 
         /**
@@ -1056,7 +1120,7 @@
                     const emojiSpan = document.createElement('span');
                     // Simple emoji mapping for common flags, or a generic globe
                     const emojiMap = {
-                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
+                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "�🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
                         "ae": "🇦🇪", "nl": "🇳🇱", "sg": "🇸🇬", "in": "🇮🇳", "br": "🇧🇷", "ua": "🇺🇦", "tr": "🇹🇷", "se": "🇸🇪", "fi": "🇫🇮", "no": "🇳🇴",
                         "ch": "🇨🇭", "es": "🇪🇸", "it": "🇮🇹", "pl": "🇵🇱", "cz": "🇨🇿", "za": "🇿🇦", "kr": "🇰🇷", "hk": "🇭🇰", "id": "🇮🇩", "vn": "🇻🇳",
                         "th": "🇹🇭", "my": "🇲🇾", "ph": "🇵🇭", "mx": "🇲🇽", "ar": "🇦🇷", "cl": "🇨🇱", "co": "🇨🇴", "pe": "🇵🇪", "eg": "🇪🇬", "sa": "🇸🇦",
@@ -1328,3 +1392,4 @@
     </script>
 </body>
 </html>
+�
