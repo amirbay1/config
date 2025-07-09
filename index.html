@@ -436,6 +436,40 @@
         .config-instructions strong {
             color: #00567e;
         }
+
+        /* New styles for test result display */
+        .test-result-display {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            word-break: break-word;
+            opacity: 0; /* Hidden by default */
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .test-result-display.show {
+            opacity: 1;
+        }
+
+        .test-result-display.success {
+            background-color: #e6ffe6; /* Light green */
+            color: #28a745; /* Dark green text */
+            border: 1px solid #28a745;
+        }
+
+        .test-result-display.error {
+            background-color: #ffe6e6; /* Light red */
+            color: #dc3545; /* Dark red text */
+            border: 1px solid #dc3545;
+        }
+
+        .test-result-display.info {
+            background-color: #e6f7ff; /* Light blue */
+            color: #007bff; /* Dark blue text */
+            border: 1px solid #007bff;
+        }
     </style>
 </head>
 <body>
@@ -669,11 +703,11 @@
 
         /**
          * Shows a temporary message box.
+         * This function is for global messages (like copy success/error), not for per-card test results.
          * @param {string} message - The message to display.
          * @param {string} type - 'success', 'error', or 'info' for styling.
-         * @param {boolean} showTestSiteButton - If true, adds a button to open ircfspace tester site.
          */
-        function showMessage(message, type = 'success', showTestSiteButton = false) {
+        function showGlobalMessage(message, type = 'success') {
             messageBox.textContent = ''; // Clear previous text
             const textNode = document.createTextNode(message);
             messageBox.appendChild(textNode);
@@ -682,23 +716,12 @@
             messageBox.classList.add(type);
             messageBox.classList.add('show');
 
-            if (showTestSiteButton) {
-                const testSiteButton = document.createElement('button');
-                testSiteButton.textContent = 'باز کردن سایت تست ircfspace';
-                testSiteButton.onclick = () => {
-                    window.open('https://ircfspace.github.io/tester/', '_blank');
-                    messageBox.classList.remove('show'); // Hide message box after opening link
-                };
-                messageBox.appendChild(testSiteButton);
-            }
-
             setTimeout(() => {
                 messageBox.classList.remove('show');
-                // Clear any dynamically added buttons when message hides
                 while (messageBox.firstChild) {
                     messageBox.removeChild(messageBox.firstChild);
                 }
-            }, 5000); // Increased duration for messages with buttons
+            }, 3000); // Shorter duration for global messages
         }
 
         /**
@@ -715,10 +738,10 @@
                 textarea.select();
                 document.execCommand('copy');
                 document.body.removeChild(textarea);
-                showMessage('کانفیگ کپی شد!', 'success');
+                showGlobalMessage('کانفیگ کپی شد!', 'success');
             } catch (err) {
                 console.error('Failed to copy text: ', err);
-                showMessage('خطا در کپی کردن کانفیگ.', 'error');
+                showGlobalMessage('خطا در کپی کردن کانفیگ.', 'error');
             }
         }
 
@@ -862,9 +885,13 @@
         /**
          * Sends the config to the backend for real testing and displays the result.
          * @param {string} configString - The V2Ray/Xray config string.
+         * @param {HTMLElement} resultDisplayElement - The DOM element to display the result in.
          */
-        async function testConfig(configString) {
-            showMessage('در حال تست کانفیگ... لطفا صبر کنید', 'info');
+        async function testConfig(configString, resultDisplayElement) {
+            // Clear previous result and show loading state
+            resultDisplayElement.innerHTML = 'در حال تست...';
+            resultDisplayElement.className = 'test-result-display show info';
+
             try {
                 const response = await fetch('/api/test-config', { // This is your hypothetical Vercel Serverless Function endpoint
                     method: 'POST',
@@ -881,14 +908,37 @@
 
                 const result = await response.json();
                 if (result.status === 'active') {
-                    showMessage(`کانفیگ فعال است! پینگ: ${result.pingMs}ms`, 'success');
+                    resultDisplayElement.innerHTML = `نقطه ی اتصال آماده ی استفادست. پینگ: ${result.pingMs}ms`;
+                    resultDisplayElement.className = 'test-result-display show success';
                 } else {
-                    showMessage(`کانفیگ غیرفعال است. دلیل: ${result.reason || 'نامشخص'}`, 'error', true); // Show test site button for inactive
+                    resultDisplayElement.innerHTML = `نقطه ی اتصال غیرفعال است. دلیل: ${result.reason || 'نامشخص'}`;
+                    resultDisplayElement.className = 'test-result-display show error';
+                    // Optionally, add a button to open the external tester site here if needed
+                    const testSiteButton = document.createElement('button');
+                    testSiteButton.textContent = 'باز کردن سایت تست ircfspace';
+                    testSiteButton.style.marginTop = '5px';
+                    testSiteButton.style.backgroundColor = '#f0f0f0';
+                    testSiteButton.style.color = '#333';
+                    testSiteButton.onclick = () => {
+                        window.open('https://ircfspace.github.io/tester/', '_blank');
+                    };
+                    resultDisplayElement.appendChild(testSiteButton);
                 }
 
             } catch (error) {
                 console.error('Error during config test:', error);
-                showMessage(`خطا در تست کانفیگ: ${error.message}.`, 'error', true); // Always show test site button on error
+                resultDisplayElement.innerHTML = `خطا در تست کانفیگ: ${error.message}.`;
+                resultDisplayElement.className = 'test-result-display show error';
+                // Optionally, add a button to open the external tester site here if needed
+                const testSiteButton = document.createElement('button');
+                testSiteButton.textContent = 'باز کردن سایت تست ircfspace';
+                testSiteButton.style.marginTop = '5px';
+                testSiteButton.style.backgroundColor = '#f0f0f0';
+                testSiteButton.style.color = '#333';
+                testSiteButton.onclick = () => {
+                    window.open('https://ircfspace.github.io/tester/', '_blank');
+                };
+                resultDisplayElement.appendChild(testSiteButton);
             }
         }
 
@@ -960,13 +1010,13 @@
                 localStorage.setItem(CACHE_KEY, compressedString);
                 localStorage.setItem('lastUpdated', Date.now()); // Keep this separate for simplicity of display
                 updateLastUpdatedTime();
-                showMessage('کانفیگ‌ها با موفقیت ذخیره شدند.', 'success');
+                showGlobalMessage('کانفیگ‌ها با موفقیت ذخیره شدند.', 'success');
             } catch (e) {
                 console.error('Error saving configs to Local Storage:', e);
                 if (e.name === 'QuotaExceededError') {
-                    showMessage('خطا: فضای ذخیره‌سازی مرورگر پر شده است. برخی از کانفیگ‌ها ذخیره نشدند.', 'error');
+                    showGlobalMessage('خطا: فضای ذخیره‌سازی مرورگر پر شده است. برخی از کانفیگ‌ها ذخیره نشدند.', 'error');
                 } else {
-                    showMessage('خطا در ذخیره کانفیگ‌ها.', 'error');
+                    showGlobalMessage('خطا در ذخیره کانفیگ‌ها.', 'error');
                 }
             }
         }
@@ -990,7 +1040,7 @@
                     if (now - timestamp < CACHE_EXPIRATION_MS) {
                         allConfigurations = proxies;
                         updateFiltersAndCounts(); // Update counts and apply filters from loaded data
-                        showMessage('کانفیگ‌ها از حافظه محلی بارگذاری شدند.', 'success');
+                        showGlobalMessage('کانفیگ‌ها از حافظه محلی بارگذاری شدند.', 'success');
                         return true;
                     } else {
                         console.log('Cached data expired. Will fetch new data.');
@@ -1120,7 +1170,7 @@
                     const emojiSpan = document.createElement('span');
                     // Simple emoji mapping for common flags, or a generic globe
                     const emojiMap = {
-                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "�🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
+                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
                         "ae": "🇦🇪", "nl": "🇳🇱", "sg": "🇸🇬", "in": "🇮🇳", "br": "🇧🇷", "ua": "🇺🇦", "tr": "🇹🇷", "se": "🇸🇪", "fi": "🇫🇮", "no": "🇳🇴",
                         "ch": "🇨🇭", "es": "🇪🇸", "it": "🇮🇹", "pl": "🇵🇱", "cz": "🇨🇿", "za": "🇿🇦", "kr": "🇰🇷", "hk": "🇭🇰", "id": "🇮🇩", "vn": "🇻🇳",
                         "th": "🇹🇭", "my": "🇲🇾", "ph": "🇵🇭", "mx": "🇲🇽", "ar": "🇦🇷", "cl": "🇨🇱", "co": "🇨🇴", "pe": "🇵🇪", "eg": "🇪🇬", "sa": "🇸🇦",
@@ -1129,7 +1179,7 @@
                         "kz": "🇰🇿", "uz": "🇺🇿", "tm": "🇹🇲", "kg": "🇰🇬", "tj": "🇹🇯", "af": "🇦🇫", "np": "🇳🇵", "lk": "🇱🇰", "mm": "🇲🇲", "la": "🇱🇦",
                         "kh": "🇰🇭", "mo": "🇲🇴", "mn": "🇲🇳", "nz": "🇳🇿", "at": "🇦🇹", "be": "🇧🇪", "dk": "🇩🇰", "gr": "🇬🇷", "hu": "🇭🇺", "ie": "🇮🇪",
                         "lu": "🇱🇺", "pt": "🇵🇹", "ro": "🇷🇴", "sk": "🇸🇰", "si": "🇸🇮", "hr": "🇭🇷", "ba": "🇧🇦", "rs": "🇷🇸", "bg": "🇧🇬", "md": "🇲🇩",
-                        "al": "🇦🇱", "mk": "🇲🇰", "cy": "🇨🇾", "mt": "🇲🇹", "is": "🇮🇸", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪", "by": "🇧🇾",
+                        "al": "🇦�", "mk": "🇲🇰", "cy": "🇨🇾", "mt": "🇲🇹", "is": "🇮🇸", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪", "by": "🇧🇾",
                         // Add more as needed, or a generic globe
                         "unknown": "🌐"
                     };
@@ -1170,8 +1220,12 @@
             // Test Config button
             const testButton = document.createElement('button');
             testButton.textContent = '⚡ تست کانفیگ';
+            // Create a dedicated div for test results for this card
+            const testResultDisplay = document.createElement('div');
+            testResultDisplay.className = 'test-result-display'; // Apply initial styling
+            
             testButton.onclick = () => {
-                testConfig(item.config);
+                testConfig(item.config, testResultDisplay); // Pass the specific result display element
             };
             actionsDiv.appendChild(testButton);
 
@@ -1192,6 +1246,7 @@
             actionsDiv.appendChild(qrButton);
 
             card.appendChild(actionsDiv);
+            card.appendChild(testResultDisplay); // Append the test result display div here
 
             // Instructions section (simplified)
             const instructionsDiv = document.createElement('div');
@@ -1377,7 +1432,7 @@
                 const allText = filteredConfigurations.map(item => item.config).join('\n');
                 copyToClipboard(allText);
             } else {
-                showMessage('کانفیگی برای کپی کردن وجود ندارد.', 'error');
+                showGlobalMessage('کانفیگی برای کپی کردن وجود ندارد.', 'error');
             }
         });
         window.addEventListener('scroll', handleScroll);
