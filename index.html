@@ -1,0 +1,1402 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نقاط اتصال امن V2Ray/Xray</title>
+    <!-- QR code library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <!-- LZ-String library for compression -->
+    <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
+    <!-- Inter font import -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Base styles matching the tgp theme */
+        body {
+            font-family: 'Inter', Tahoma, sans-serif;
+            background: #f4f8fb;
+            color: #333;
+            padding: 20px;
+            direction: rtl; /* Right-to-left for Persian */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 960px;
+            padding: 20px;
+            box-sizing: border-box; /* Include padding in width */
+        }
+
+        .header {
+            display: flex;
+            flex-direction: column; /* Stack elements vertically */
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 32px; /* Larger title */
+            color: #0088cc;
+            text-align: center;
+            font-weight: 700; /* Bolder title */
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            font-size: 14px;
+            color: #555;
+            margin-bottom: 20px;
+            background-color: #e3f2fd; /* Light blue background */
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .filter-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .filter-group label {
+            font-size: 14px;
+            color: #555;
+        }
+
+        .filter-group select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+            background-color: #fff;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .filter-group select:focus {
+            border-color: #0088cc;
+        }
+
+        #proxies { /* Renamed from configsContainer to proxies for consistency with new template */
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px; /* Increased gap between cards */
+            width: 100%;
+        }
+
+        .proxy-card { /* Renamed from config-card to proxy-card */
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px; /* More rounded corners */
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); /* Stronger shadow */
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effects */
+            position: relative; /* Needed for absolute positioning of flag */
+        }
+
+        .proxy-card:hover {
+            transform: translateY(-5px); /* Lift effect on hover */
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* Enhanced shadow on hover */
+        }
+
+        .flag-container {
+            position: absolute;
+            top: 10px;
+            right: 10px; /* Flag on the right */
+            width: 32px; /* Size for flag image */
+            height: 24px; /* Maintain aspect ratio */
+            overflow: hidden; /* Hide parts of image if not perfectly sized */
+            border-radius: 4px; /* Slightly rounded corners for flags */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.15); /* Small shadow for flag */
+            z-index: 10; /* Ensure it's above other content */
+            display: flex; /* Use flex to center globe if it's text */
+            align-items: center;
+            justify-content: center;
+        }
+
+        .flag-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Cover the container without distortion */
+        }
+        /* Emoji flag fallback */
+        .flag-container span {
+            font-size: 24px; /* Adjust size for emoji */
+            line-height: 1;
+        }
+
+
+        .proxy-type-tag { /* Renamed from tag to proxy-type-tag */
+            position: absolute;
+            top: 10px;
+            left: 10px; /* Type tag on the left */
+            background-color: #0088cc;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+        }
+
+        .proxy-card h4 {
+            margin: 0 0 5px; /* Reduced margin to fit details */
+            font-size: 18px;
+            word-break: break-all; /* Ensures long hostnames wrap */
+            color: #00567e; /* Darker blue for host:port */
+            font-weight: 600;
+            /* Add padding-right to prevent overlap with flag on the right */
+            padding-right: 45px; /* Adjust as needed based on flag size and desired spacing */
+            /* Add padding-left to prevent overlap with type tag on the left */
+            padding-left: 60px; /* Adjust as needed based on tag size and desired spacing */
+        }
+
+        .proxy-details { /* New class for displaying details under title */
+            font-size: 13px;
+            color: #555;
+            margin-bottom: 10px;
+            word-break: break-all;
+        }
+
+        .proxy-actions {
+            display: flex;
+            flex-direction: column; /* Stack buttons vertically by default */
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .proxy-actions a, .proxy-actions button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 15px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .proxy-actions a {
+            background-color: #0088cc;
+            color: #fff;
+        }
+
+        .proxy-actions a:hover {
+            background-color: #006699;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .proxy-actions button {
+            background-color: #e0e0e0;
+            color: #333;
+        }
+
+        .proxy-actions button:hover {
+            background-color: #d0d0d0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .loading-message {
+            text-align: center;
+            padding: 20px;
+            font-size: 1.1em;
+            color: #0088cc;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 0.9em;
+            text-align: center;
+            color: #777;
+            width: 100%;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (min-width: 640px) {
+            .proxy-actions {
+                flex-direction: row; /* Buttons side-by-side on larger screens */
+                justify-content: flex-start;
+            }
+            .proxy-actions a, .proxy-actions button {
+                flex-grow: 0; /* Don't grow to fill space */
+            }
+        }
+        .refresh-button {
+            background: #4CAF50; /* Green color for refresh */
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
+            margin-top: 10px; /* Space from title */
+        }
+        .refresh-button:hover {
+            background-color: #45a049;
+        }
+
+        /* Progress and Timer Section - Integrated into new theme */
+        .progress-section { /* Renamed from progress-container for clarity */
+            background-color: #e3f2fd; /* Light blue background */
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding: 15px;
+            margin-bottom: 20px;
+            width: 100%;
+            display: none; /* Hidden by default */
+        }
+        .progress-bar-container { /* Renamed from progress-container */
+            background-color: #c5e1f7; /* Lighter blue for container */
+            border-radius: 8px;
+            height: 20px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-bar {
+            background-color: #0088cc; /* Blue progress bar */
+            height: 100%;
+            width: 0%;
+            border-radius: 8px;
+            transition: width 0.3s ease-in-out;
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .loading-spinner { /* Re-styled for new theme */
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0088cc; /* Blue spinner */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 50px auto;
+            display: none; /* Hidden by default */
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Message Box - Re-styled for new theme */
+        .message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px; /* For RTL, position right */
+            background-color: #4CAF50; /* Green for success */
+            color: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.5s ease-in-out, visibility 0.5s ease-in-out;
+            text-align: right;
+            max-width: 300px; /* Limit width */
+        }
+        .message-box.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .message-box.success {
+            background-color: #4CAF50; /* Green */
+        }
+        .message-box.error {
+            background-color: #f44336; /* Red */
+        }
+        .message-box.info { /* New style for info messages */
+            background-color: #2196F3; /* Blue for info */
+        }
+        .message-box button { /* Style for buttons inside message box */
+            background-color: #fff;
+            color: #0088cc;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 10px;
+            font-size: 13px;
+            transition: background-color 0.2s;
+            width: 100%; /* Full width button */
+        }
+        .message-box button:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* QR Code Modal Styles */
+        .qr-modal {
+            position: fixed;
+            z-index: 1001; /* Above other elements */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6); /* Semi-transparent black background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .qr-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .qr-modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            text-align: center;
+            max-width: 320px; /* Max width for QR modal */
+            width: 90%; /* Responsive width */
+        }
+        .qr-modal-close {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            left: 15px; /* Position close button on left for RTL */
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .qr-modal-close:hover,
+        .qr-modal-close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .qr-modal-content h3 {
+            margin-top: 0;
+            color: #0088cc;
+            font-size: 22px;
+            margin-bottom: 15px;
+        }
+        .qr-modal-content p {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+        .qr-canvas {
+            display: block; /* Ensure canvas is block for centering */
+            margin: 0 auto; /* Center the canvas */
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        .config-instructions {
+            background-color: #f0f8ff; /* Light blue background for instructions */
+            border-left: 5px solid #0088cc; /* Blue left border */
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.6;
+        }
+        .config-instructions strong {
+            color: #00567e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 لیست نقاط اتصال امن V2Ray/Xray</h1>
+            <button class="refresh-button" id="updateButton">⟳ بروزرسانی لیست</button>
+            <div class="info-bar">
+                <span id="proxyCount">تعداد کل کانفیگ‌ها: 0</span>
+                <span id="lastUpdatedDate">آخرین بروزرسانی: --:--</span>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label for="protocolFilter">پروتکل:</label>
+                <select id="protocolFilter">
+                    <option value="all">همه پروتکل‌ها</option>
+                    <option value="vmess">VMess</option>
+                    <option value="vless">VLess</option>
+                    <option value="trojan">Trojan</option>
+                    <option value="ss">Shadowsocks</option>
+                    <option value="ssr">ShadowsocksR</option>
+                    <option value="warp">WARP</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="countryFilter">کشور:</label>
+                <select id="countryFilter">
+                    <option value="all">همه کشورها</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
+            <button class="refresh-button" id="copyAllButton" style="background-color: #0088cc; margin-top: 0;">📋 کپی همه کانفیگ‌ها</button>
+        </div>
+
+        <!-- Progress and Timer Section -->
+        <div class="progress-section" id="progressSection">
+            <div class="progress-info">
+                <span id="currentSource">در حال بارگذاری...</span>
+                <span id="elapsedTime">00:00</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </div>
+
+        <div id="loading" class="loading-spinner"></div>
+        <div id="proxies"></div>
+        <div id="loadingMore" class="loading-message" style="display:none;">در حال بارگذاری نقاط اتصال بیشتر...</div>
+        <div id="messageBox" class="message-box"></div>
+
+        <!-- QR Code Modal Structure -->
+        <div id="qrModal" class="qr-modal">
+            <div class="qr-modal-content">
+                <button id="qrModalClose" class="qr-modal-close">✖</button>
+                <h3>کد QR کانفیگ</h3>
+                <canvas id="qrCanvas" class="qr-canvas"></canvas>
+                <p>این کد QR را با اپلیکیشن V2Ray/Xray خود اسکن کنید.</p>
+            </div>
+        </div>
+
+        <footer>ساخته‌شده با ❤️ توسط شما</footer>
+    </div>
+
+    <script type="text/javascript">
+        // DOM elements
+        const proxiesDiv = document.getElementById('proxies');
+        const proxyCountSpan = document.getElementById('proxyCount');
+        const lastUpdatedDateSpan = document.getElementById('lastUpdatedDate');
+        const loadingMoreDiv = document.getElementById('loadingMore');
+        const protocolFilterSelect = document.getElementById('protocolFilter');
+        const countryFilterSelect = document.getElementById('countryFilter');
+        const updateButton = document.getElementById('updateButton');
+        const copyAllButton = document.getElementById('copyAllButton');
+        const loadingSpinner = document.getElementById('loading');
+        const progressBar = document.getElementById('progressBar');
+        const currentSourceSpan = document.getElementById('currentSource');
+        const elapsedTimeSpan = document.getElementById('elapsedTime');
+        const progressSection = document.getElementById('progressSection');
+        const messageBox = document.getElementById('messageBox');
+        const qrModal = document.getElementById('qrModal');
+        const qrModalClose = document.getElementById('qrModalClose');
+        const qrCanvas = document.getElementById('qrCanvas');
+
+        let allConfigurations = [];
+        let filteredConfigurations = [];
+        let currentProxyIndex = 0;
+        const proxiesPerLoad = 20;
+        let isLoading = false;
+        let timerInterval;
+
+        const CACHE_KEY = 'v2ray_configs_cache';
+        const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        // List of V2Ray/Xray URLs to fetch
+        const directUrls = [
+            "https://raw.githubusercontent.com/MahsaNetConfigTopic/config/refs/heads/main/xray_final.txt",
+            "https://raw.githubusercontent.com/sinabigo/Xray/main/@sinavm",
+            "https://raw.githubusercontent.com/Ashkan-m/v2ray/main/Sub.txt",
+            "https://raw.githubusercontent.com/mahdibland/V2RayAggregator/master/Eternity.txt",
+            "https://raw.githubusercontent.com/4n0nymou3/multi-proxy-config-fetcher/refs/heads/main/configs/proxy_configs.txt",
+            "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_Sub.txt",
+            "https://raw.githubusercontent.com/ircfspace/warpsub/main/export/warp",
+            "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/V2Ray-Config-By-EbraSha-All-Type.txt",
+            "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/main/V2Ray-Config-By-EbraSha.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vmess.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vless.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/trojan.txt",
+            "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/ss.txt",
+        ];
+
+        const base64Urls = [
+            "https://raw.githubusercontent.com/imyebekhe/vpn-fail/refs/heads/main/sub-link",
+            "https://raw.githubusercontent.com/ALIILAPRO/v2rayNG-Config/main/sub.txt",
+            "https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/Eternity",
+            "https://raw.githubusercontent.com/Pawdroid/Free-servers/refs/heads/main/sub",
+            "https://proxy.v2gh.com/https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
+            "https://raw.githubusercontent.com/AzadNetCH/Clash/main/AzadNet.txt",
+            "https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/app/sub.txt",
+        ];
+
+        // Add ranged URLs
+        for (let i = 1; i <= 39; i++) {
+            directUrls.push(`https://raw.githubusercontent.com/barry-far/V2ray-Config/main/Sub${i}.txt`);
+        }
+        for (let i = 1; i <= 44; i++) {
+            directUrls.push(`https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/Sub${i}.txt`);
+        }
+        for (let i = 1; i <= 4; i++) {
+            base64Urls.push(`https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/mtn/sub_${i}.txt`);
+            base64Urls.push(`https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/mci/sub_${i}.txt`);
+        }
+
+        // List of countries for detection and display.
+        // These are the "clean" names that getCountry will return.
+        const countries = [
+            "Albania", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan", "Bahrain", "Belgium", "Bolivia",
+            "Bosnia and Herzegovina",
+            "Brazil", "Bulgaria", "Canada", "Chile", "China", "Colombia", "Costa Rica",
+            "Croatia", "Cyprus", "Czechia", "Denmark", "Ecuador", "Estonia", "Finland", "France", "Germany",
+            "Gibraltar", "Greece", "Hong Kong", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Ireland", "Israel",
+            "Italy", "Japan", "Kazakhstan", "Latvia", "Lithuania", "Luxembourg", "Malaysia", "Malta", "Mauritius", "Mexico",
+            "Moldova", "New Zealand", "North Macedonia",
+            "Norway", "Paraguay", "Poland", "Portugal", "Puerto Rico", "Romania",
+            "Russia", "Serbia", "Seychelles", "Singapore", "Slovakia", "Slovenia", "South Africa", "South Korea",
+            "Spain", "Sweden", "Switzerland", "Taiwan", "Thailand", "The Netherlands", "Türkiye", "Ukraine",
+            "United Arab Emirates",
+            "United Kingdom", "United States", "Unknown",
+            "Vietnam"
+        ];
+        // Add country-specific URLs to directUrls, using the underscored version for the URL path
+        countries.filter(c => c !== "Unknown").forEach(country => {
+            directUrls.push(`https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/${country.replace(/ /g, '_')}.txt`);
+        });
+
+        // Combined list of all URLs to fetch
+        const allFetchUrls = [];
+        const processedUrls = new Set();
+
+        directUrls.forEach(url => {
+            const rawUrl = convertToRawUrl(url.split('#')[0]);
+            if (!processedUrls.has(rawUrl)) {
+                allFetchUrls.push({ url: rawUrl, decode: false });
+                processedUrls.add(rawUrl);
+            }
+        });
+
+        base64Urls.forEach(url => {
+            const rawUrl = convertToRawUrl(url.split('#')[0]);
+            if (!processedUrls.has(rawUrl)) {
+                allFetchUrls.push({ url: rawUrl, decode: true });
+                processedUrls.add(rawUrl);
+            } else {
+                const existingEntry = allFetchUrls.find(entry => entry.url === rawUrl);
+                if (existingEntry) {
+                    existingEntry.decode = true;
+                }
+            }
+        });
+
+        // Mapping of country names (exactly as returned by getCountry) to 2-letter ISO codes for flags
+        const countryCodeMap = {
+            "Albania": "al", "Argentina": "ar", "Armenia": "am", "Australia": "au", "Austria": "at",
+            "Azerbaijan": "az", "Bahrain": "bh", "Belgium": "be", "Bolivia": "bo",
+            "Bosnia and Herzegovina": "ba",
+            "Brazil": "br", "Bulgaria": "bg", "Canada": "ca", "Chile": "cl", "China": "cn", "Colombia": "co",
+            "Costa Rica": "cr",
+            "Croatia": "hr", "Cyprus": "cy", "Czechia": "cz",
+            "Denmark": "dk", "Ecuador": "ec", "Estonia": "ee", "Finland": "fi", "France": "fr", "Germany": "de",
+            "Gibraltar": "gi", "Greece": "gr", "Hong Kong": "hk",
+            "Hungary": "hu", "Iceland": "is", "India": "in", "Indonesia": "id", "Iran": "ir", "Ireland": "ie", "Israel": "il",
+            "Italy": "it", "Japan": "jp", "Kazakhstan": "kz", "Latvia": "lv", "Lithuania": "lt", "Luxembourg": "lu", "Malaysia": "my", "Malta": "mt",
+            "Mauritius": "mu", "Mexico": "mx", "Moldova": "md",
+            "New Zealand": "nz",
+            "North Macedonia": "mk",
+            "Norway": "no", "Paraguay": "py", "Poland": "pl", "Portugal": "pt", "Puerto Rico": "pr", "Romania": "ro",
+            "Russia": "ru", "Serbia": "rs", "Seychelles": "sc", "Singapore": "sg", "Slovakia": "sk", "Slovenia": "si",
+            "South Africa": "za",
+            "South Korea": "kr",
+            "Spain": "es", "Sweden": "se", "Switzerland": "ch", "Taiwan": "tw",
+            "Thailand": "th",
+            "The Netherlands": "nl",
+            "Türkiye": "tr", "Ukraine": "ua",
+            "United Arab Emirates": "ae",
+            "United Kingdom": "gb",
+            "United States": "us",
+            "Unknown": "unknown",
+            "Vietnam": "vn"
+        };
+
+        // Mapping of country codes to Persian names (for display in dropdown)
+        const countryNamesFa = {
+            "al": "آلبانی", "ar": "آرژانتین", "am": "ارمنستان", "au": "استرالیا", "at": "اتریش", "az": "آذربایجان",
+            "bh": "بحرین", "be": "بلژیک", "bo": "بولیوی", "ba": "بوسنی و هرزگوین", "br": "برزیل", "bg": "بلغارستان",
+            "ca": "کانادا", "cl": "شیلی", "cn": "چین", "co": "کلمبیا", "cr": "کاستاریکا", "hr": "کرواسی",
+            "cy": "قبرس", "cz": "جمهوری چک", "de": "آلمان", "dk": "دانمارک", "ec": "اکوادور", "ee": "استونی",
+            "fi": "فنلاند", "fr": "فرانسه", "gi": "جبل‌الطارق", "gr": "یونان", "hk": "هنگ کنگ", "hu": "مجارستان",
+            "is": "ایسلند", "in": "هند", "id": "اندونزی", "ir": "ایران", "ie": "ایرلند", "il": "اسرائیل",
+            "it": "ایتالیا", "jp": "ژاپن", "kz": "قزاقستان", "lv": "لتونی", "lt": "لیتوانی", "lu": "لوکزامبورگ",
+            "my": "مالزی", "mt": "مالت", "mu": "موریس", "mx": "مکزیک", "md": "مولداوی", "nz": "نیوزلند",
+            "mk": "مقدونیه شمالی", "no": "نروژ", "py": "پاراگوئه", "pl": "لهستان", "pt": "پرتغال", "pr": "پورتوریکو",
+            "ro": "رومانی", "ru": "روسیه", "rs": "صربستان", "sc": "سیشل", "sg": "سنگاپور", "sk": "اسلواکی",
+            "si": "اسلوونی", "za": "آفریقای جنوبی", "kr": "کره جنوبی", "es": "اسپانیا", "se": "سوئد", "ch": "سوئیس",
+            "tw": "تایوان", "th": "تایلند", "nl": "هلند", "tr": "ترکیه", "ua": "اوکراین", "ae": "امارات متحده عربی",
+            "gb": "بریتانیا", "us": "ایالات متحده", "vn": "ویتنام", "unknown": "نامعلوم"
+        };
+
+
+        /**
+         * Shows a temporary message box.
+         * @param {string} message - The message to display.
+         * @param {string} type - 'success', 'error', or 'info' for styling.
+         * @param {boolean} showTestSiteButton - If true, adds a button to open ircfspace tester site.
+         */
+        function showMessage(message, type = 'success', showTestSiteButton = false) {
+            messageBox.textContent = ''; // Clear previous text
+            const textNode = document.createTextNode(message);
+            messageBox.appendChild(textNode);
+
+            messageBox.className = 'message-box'; // Reset classes
+            messageBox.classList.add(type);
+            messageBox.classList.add('show');
+
+            if (showTestSiteButton) {
+                const testSiteButton = document.createElement('button');
+                testSiteButton.textContent = 'باز کردن سایت تست ircfspace';
+                testSiteButton.onclick = () => {
+                    window.open('https://ircfspace.github.io/tester/', '_blank');
+                    messageBox.classList.remove('show'); // Hide message box after opening link
+                };
+                messageBox.appendChild(testSiteButton);
+            }
+
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+                // Clear any dynamically added buttons when message hides
+                while (messageBox.firstChild) {
+                    messageBox.removeChild(messageBox.firstChild);
+                }
+            }, 5000); // Increased duration for messages with buttons
+        }
+
+        /**
+         * Copies text to the clipboard using document.execCommand.
+         * @param {string} text - The text to copy.
+         */
+        function copyToClipboard(text) {
+            try {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.left = '-9999px';
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showMessage('کانفیگ کپی شد!', 'success');
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                showMessage('خطا در کپی کردن کانفیگ.', 'error');
+            }
+        }
+
+        /**
+         * Converts github.com/user/repo/blob/branch/path to raw.githubusercontent.com.
+         * @param {string} url - The GitHub URL.
+         * @returns {string} The raw content URL.
+         */
+        function convertToRawUrl(url) {
+            if (url.includes("github.com") && url.includes("/blob/")) {
+                return url.replace("github.com", "raw.githubusercontent.com").replace("/blob/", "/");
+            }
+            return url;
+        }
+
+        /**
+         * Extracts protocol from a V2Ray/Xray config string.
+         * @param {string} config - The config string.
+         * @returns {string} The protocol name (e.g., 'vmess', 'vless') or 'unknown'.
+         */
+        function getProtocol(config) {
+            const lowerCaseConfig = config.toLowerCase();
+            if (lowerCaseConfig.startsWith('vmess://')) return 'vmess';
+            if (lowerCaseConfig.startsWith('vless://')) return 'vless';
+            if (lowerCaseConfig.startsWith('trojan://')) return 'trojan';
+            if (lowerCaseConfig.startsWith('ss://')) return 'ss';
+            if (lowerCaseConfig.startsWith('ssr://')) return 'ssr';
+            if (lowerCaseConfig.startsWith('warp://')) return 'warp';
+            return 'unknown';
+        }
+
+        /**
+         * Extracts country from a V2Ray/Xray config string (heuristic).
+         * Returns the full country name as used in the `countries` array.
+         * @param {string} config - The config string.
+         * @returns {string} The detected country name or 'Unknown'.
+         */
+        function getCountry(config) {
+            const lowerCaseConfig = config.toLowerCase();
+            for (const country of countries) {
+                // Check for full country name (with spaces) in the config string
+                if (lowerCaseConfig.includes(country.toLowerCase())) {
+                    return country; // Return the clean name
+                }
+            }
+            return 'Unknown';
+        }
+
+        /**
+         * Extracts relevant display information from a V2Ray/Xray config string.
+         * @param {string} config - The V2Ray/Xray config string.
+         * @returns {Object} An object with { displayTitle: string, displayDetails: string }.
+         */
+        function parseV2rayConfigForDisplay(config) {
+            const protocol = getProtocol(config);
+            let displayTitle = `${protocol.toUpperCase()} کانفیگ`;
+            let displayDetails = '';
+
+            try {
+                if (protocol === 'vmess' || protocol === 'vless') {
+                    const base64Part = config.substring(protocol.length + 3); // e.g., "vmess://" is 8 chars
+                    let decodedJson = '';
+                    try {
+                        decodedJson = LZString.decompressFromBase64(base64Part); // Try LZ-String first
+                    } catch (e) {
+                        // If LZ-String fails, try standard Base64
+                        decodedJson = atob(base64Part);
+                    }
+                    
+                    const configObj = JSON.parse(decodedJson);
+
+                    if (configObj.ps) { // remark/name
+                        displayTitle = configObj.ps;
+                    } else if (configObj.add && configObj.port) { // address and port
+                        displayTitle = `${configObj.add}:${configObj.port}`;
+                    } else if (configObj.add) {
+                        displayTitle = configObj.add;
+                    }
+                    displayDetails = `پروتکل: ${protocol.toUpperCase()}`;
+                    if (configObj.add) displayDetails += `, آدرس: ${configObj.add}`;
+                    if (configObj.port) displayDetails += `, پورت: ${configObj.port}`;
+                    if (configObj.id) displayDetails += `, ID: ${configObj.id.substring(0, 8)}...`; // Show first few chars of ID
+                    if (configObj.net) displayDetails += `, شبکه: ${configObj.net}`;
+
+                } else if (protocol === 'trojan' || protocol === 'ss' || protocol === 'ssr' || protocol === 'warp') {
+                    // These protocols often have host:port directly in the URL
+                    const urlParts = config.split('://')[1];
+                    const atIndex = urlParts.indexOf('@');
+                    let hostPortPart = urlParts;
+                    if (atIndex !== -1) { // For ss://method:password@host:port or trojan://password@host:port
+                        hostPortPart = urlParts.substring(atIndex + 1);
+                    }
+                    const hashIndex = hostPortPart.indexOf('#');
+                    if (hashIndex !== -1) {
+                        hostPortPart = hostPortPart.substring(0, hashIndex);
+                    }
+                    const questionMarkIndex = hostPortPart.indexOf('?');
+                    if (questionMarkIndex !== -1) {
+                        hostPortPart = hostPortPart.substring(0, questionMarkIndex);
+                    }
+
+                    const lastColonIndex = hostPortPart.lastIndexOf(':');
+                    if (lastColonIndex !== -1) {
+                        const host = hostPortPart.substring(0, lastColonIndex);
+                        const port = hostPortPart.substring(lastColonIndex + 1);
+                        displayTitle = `${host}:${port}`;
+                        displayDetails = `پروتکل: ${protocol.toUpperCase()}, آدرس: ${host}, پورت: ${port}`;
+                    } else {
+                        displayTitle = hostPortPart;
+                        displayDetails = `پروتکل: ${protocol.toUpperCase()}, آدرس: ${hostPortPart}`;
+                    }
+
+                    // For SSR, try to extract remark if present
+                    if (protocol === 'ssr') {
+                        const params = new URLSearchParams(config.split('?')[1]);
+                        const remark = params.get('remarks');
+                        if (remark) {
+                            try {
+                                const decodedRemark = atob(remark);
+                                displayTitle = decodedRemark;
+                                displayDetails += `, نام: ${decodedRemark}`;
+                            } catch (e) {
+                                // If remark is not base64, use as is
+                                displayTitle = remark;
+                                displayDetails += `, نام: ${remark}`;
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn(`Failed to parse config for display: ${config}`, e);
+                // Fallback: display protocol and a truncated version of the config
+                displayTitle = `${protocol.toUpperCase()} کانفیگ`; // No "خطا در تحلیل"
+                displayDetails = `کانفیگ: ${config.substring(0, Math.min(config.length, 50))}...`; // Show first 50 chars or less
+            }
+
+            return { displayTitle, displayDetails };
+        }
+
+
+        /**
+         * Performs a basic client-side validation of the config string.
+         * This does NOT perform a network connectivity test through the proxy.
+         * @param {string} configString - The V2Ray/Xray config string.
+         */
+        async function testConfig(configString) {
+            const protocol = getProtocol(configString);
+            let isValid = false;
+            let message = '';
+
+            showMessage('در حال تست کانفیگ...', 'info'); // Show testing in progress message
+
+            // Simulate network delay
+            await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5 seconds delay
+
+            try {
+                if (protocol === 'vmess' || protocol === 'vless') {
+                    const base64Part = configString.substring(protocol.length + 3);
+                    let decodedJson = '';
+                    try {
+                        decodedJson = LZString.decompressFromBase64(base64Part);
+                    } catch (e) {
+                        decodedJson = atob(base64Part);
+                    }
+                    JSON.parse(decodedJson); // Just try to parse to see if it's valid JSON
+                    isValid = true;
+                    message = `کانفیگ ${protocol.toUpperCase()} معتبر است.`;
+                } else if (protocol === 'trojan' || protocol === 'ss' || protocol === 'ssr' || protocol === 'warp') {
+                    // For these, a basic check is just if it matches the protocol prefix
+                    isValid = true; // Assume valid if it has the correct prefix
+                    message = `کانفیگ ${protocol.toUpperCase()} معتبر است.`;
+                } else {
+                    message = 'پروتکل ناشناخته یا کانفیگ نامعتبر.';
+                }
+            } catch (e) {
+                isValid = false;
+                message = `کانفیگ نامعتبر یا خراب است: ${e.message}`;
+            }
+
+            showMessage(message, isValid ? 'success' : 'error', true); // Pass true to show the test site button
+            // Always show the disclaimer about full test capability
+            showMessage('توجه: تست کامل اتصال نیازمند برنامه کلاینت V2Ray/Xray است.', 'info');
+        }
+
+        /**
+         * Fetches content from a URL, optionally decodes Base64, and extracts configs.
+         * @param {Object} urlInfo - Object containing url and decode flag.
+         * @returns {Array<Object>} Array of config objects {config: string, protocol: string, country: string}.
+         */
+        async function fetchContent(urlInfo) {
+            const { url, decode } = urlInfo;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    let errorMessage = `Error fetching ${url}: HTTP Status ${response.status}`;
+                    if (response.status === 404) {
+                        errorMessage += ` - فایل یافت نشد (404 Not Found). این URL ممکن است حذف شده یا تغییر کرده باشد.`;
+                    } else {
+                        errorMessage += ` - ${response.statusText}`;
+                    }
+                    console.error(errorMessage);
+                    return [];
+                }
+                let text = await response.text();
+
+                if (decode) {
+                    try {
+                        text = atob(text); // Base64 decode
+                    } catch (e) {
+                        console.warn(`Warning: Base64 decoding failed for ${url}. Attempting to use raw content. Error:`, e);
+                    }
+                }
+
+                const rawConfigs = text.split('\n')
+                                    .map(line => line.trim())
+                                    .filter(line => {
+                                        const lowerCaseLine = line.toLowerCase();
+                                        return lowerCaseLine.startsWith('vmess://') ||
+                                               lowerCaseLine.startsWith('vless://') ||
+                                               lowerCaseLine.startsWith('trojan://') ||
+                                               lowerCaseLine.startsWith('ss://') ||
+                                               lowerCaseLine.startsWith('ssr://') ||
+                                               lowerCaseLine.startsWith('warp://');
+                                    });
+                
+                return rawConfigs.map(config => ({
+                    config: config,
+                    protocol: getProtocol(config),
+                    country: getCountry(config)
+                }));
+
+            } catch (error) {
+                console.error(`Network or processing error for ${url}:`, error);
+                return [];
+            }
+        }
+
+        /**
+         * Saves configurations to Local Storage using LZ-String compression.
+         * @param {Array<Object>} configs - Array of config objects.
+         */
+        function saveConfigsToLocalStorage(configs) {
+            try {
+                const dataToStore = {
+                    proxies: configs,
+                    timestamp: Date.now()
+                };
+                const jsonString = JSON.stringify(dataToStore);
+                const compressedString = LZString.compressToBase64(jsonString);
+                localStorage.setItem(CACHE_KEY, compressedString);
+                localStorage.setItem('lastUpdated', Date.now()); // Keep this separate for simplicity of display
+                updateLastUpdatedTime();
+                showMessage('کانفیگ‌ها با موفقیت ذخیره شدند.', 'success');
+            } catch (e) {
+                console.error('Error saving configs to Local Storage:', e);
+                if (e.name === 'QuotaExceededError') {
+                    showMessage('خطا: فضای ذخیره‌سازی مرورگر پر شده است. برخی از کانفیگ‌ها ذخیره نشدند.', 'error');
+                } else {
+                    showMessage('خطا در ذخیره کانفیگ‌ها.', 'error');
+                }
+            }
+        }
+
+        /**
+         * Loads configurations from Local Storage, decompressing with LZ-String.
+         * @returns {boolean} True if configs were loaded, false otherwise.
+         */
+        function loadConfigsFromLocalStorage() {
+            const compressedData = localStorage.getItem(CACHE_KEY);
+            if (compressedData) {
+                try {
+                    const decompressedString = LZString.decompressFromBase64(compressedData);
+                    if (!decompressedString) {
+                        console.error('Decompression failed. Data might be corrupted or not compressed.');
+                        localStorage.removeItem(CACHE_KEY); // Clear potentially bad data
+                        return false;
+                    }
+                    const { proxies, timestamp } = JSON.parse(decompressedString);
+                    const now = Date.now();
+                    if (now - timestamp < CACHE_EXPIRATION_MS) {
+                        allConfigurations = proxies;
+                        updateFiltersAndCounts(); // Update counts and apply filters from loaded data
+                        showMessage('کانفیگ‌ها از حافظه محلی بارگذاری شدند.', 'success');
+                        return true;
+                    } else {
+                        console.log('Cached data expired. Will fetch new data.');
+                        localStorage.removeItem(CACHE_KEY);
+                    }
+                } catch (e) {
+                    console.error('Error parsing or decompressing cached data:', e);
+                    localStorage.removeItem(CACHE_KEY); // Clear invalid cache
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Updates the "Last Updated" text in the info bar.
+         */
+        function updateLastUpdatedTime() {
+            const lastUpdatedTimestamp = localStorage.getItem('lastUpdated');
+            if (lastUpdatedTimestamp) {
+                const date = new Date(parseInt(lastUpdatedTimestamp));
+                lastUpdatedDateSpan.textContent = `آخرین بروزرسانی: ${date.toLocaleDateString('fa-IR')} ${date.toLocaleTimeString('fa-IR')}`;
+            } else {
+                lastUpdatedDateSpan.textContent = 'آخرین بروزرسانی: --:--';
+            }
+        }
+
+        /**
+         * Populates filter dropdowns and updates total/filter counts.
+         */
+        function updateFiltersAndCounts() {
+            // Clear previous options except "همه"
+            protocolFilterSelect.innerHTML = `
+                <option value="all">همه پروتکل‌ها</option>
+                <option value="vmess">VMess</option>
+                <option value="vless">VLess</option>
+                <option value="trojan">Trojan</option>
+                <option value="ss">Shadowsocks</option>
+                <option value="ssr">ShadowsocksR</option>
+                <option value="warp">WARP</option>
+            `;
+            countryFilterSelect.innerHTML = '<option value="all">همه کشورها</option>';
+            
+            const countryCounts = {};
+            const protocolCounts = {};
+
+            allConfigurations.forEach(item => {
+                // Count countries
+                countryCounts[item.country] = (countryCounts[item.country] || 0) + 1;
+                // Count protocols
+                protocolCounts[item.protocol] = (protocolCounts[item.protocol] || 0) + 1;
+            });
+
+            // Populate country filter
+            const sortedCountries = Object.keys(countryCounts).sort((a, b) => {
+                const nameA = countryNamesFa[countryCodeMap[a.toLowerCase()]] || a;
+                const nameB = countryNamesFa[countryCodeMap[b.toLowerCase()]] || b;
+                return nameA.localeCompare(nameB, 'fa', { sensitivity: 'base' });
+            });
+
+            sortedCountries.forEach(countryName => {
+                const option = document.createElement('option');
+                option.value = countryName;
+                const displayCountryCode = countryCodeMap[countryName.toLowerCase()];
+                const displayCountryName = countryNamesFa[displayCountryCode] || countryName;
+                option.textContent = `${displayCountryName} (${countryCounts[countryName]})`;
+                countryFilterSelect.appendChild(option);
+            });
+
+            // Update protocol filter counts
+            Array.from(protocolFilterSelect.options).forEach(option => {
+                if (option.value !== 'all' && protocolCounts[option.value]) {
+                    option.textContent = `${option.textContent.split('(')[0].trim()} (${protocolCounts[option.value]})`;
+                } else if (option.value !== 'all') {
+                    option.textContent = `${option.textContent.split('(')[0].trim()} (0)`;
+                }
+            });
+
+            // Update total count
+            proxyCountSpan.textContent = `تعداد کل کانفیگ‌ها: ${allConfigurations.length}`;
+
+            // Apply current filters after updating counts
+            applyFilters();
+        }
+
+        /**
+         * Applies the selected filters and re-renders the proxy list.
+         */
+        function applyFilters() {
+            const selectedProtocol = protocolFilterSelect.value;
+            const selectedCountry = countryFilterSelect.value;
+
+            filteredConfigurations = allConfigurations.filter(item => {
+                const matchesProtocol = selectedProtocol === 'all' || item.protocol === selectedProtocol;
+                const matchesCountry = selectedCountry === 'all' || item.country === selectedCountry;
+                return matchesProtocol && matchesCountry;
+            });
+
+            // Reset current index and clear display before loading filtered results
+            proxiesDiv.innerHTML = '';
+            currentProxyIndex = 0;
+            loadMoreProxies();
+        }
+
+        /**
+         * Creates an HTML card for a given V2Ray/Xray config.
+         * @param {Object} item - The config object {config: string, protocol: string, country: string}.
+         * @returns {HTMLElement} The created card element.
+         */
+        function createProxyCard(item) {
+            const card = document.createElement('div');
+            card.className = 'proxy-card';
+
+            // Parse config for display title and details
+            const { displayTitle, displayDetails } = parseV2rayConfigForDisplay(item.config);
+
+            // Flag container
+            const flagContainer = document.createElement('div');
+            flagContainer.className = 'flag-container';
+            const countryCode = countryCodeMap[item.country.toLowerCase()]; // Get 2-letter code from map
+            if (countryCode && countryCode !== 'unknown') {
+                const flagImg = document.createElement('img');
+                flagImg.src = `https://flagcdn.com/w32/${countryCode}.png`;
+                flagImg.alt = `پرچم ${countryNamesFa[countryCode] || item.country}`;
+                flagImg.onerror = function() {
+                    this.onerror = null;
+                    // Fallback to emoji if image fails
+                    const emojiSpan = document.createElement('span');
+                    // Simple emoji mapping for common flags, or a generic globe
+                    const emojiMap = {
+                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦�",
+                        "ae": "🇦🇪", "nl": "🇳🇱", "sg": "🇸🇬", "in": "🇮🇳", "br": "🇧🇷", "ua": "🇺🇦", "tr": "🇹🇷", "se": "🇸🇪", "fi": "🇫🇮", "no": "🇳🇴",
+                        "ch": "🇨🇭", "es": "🇪🇸", "it": "🇮🇹", "pl": "🇵🇱", "cz": "🇨🇿", "za": "🇿🇦", "kr": "🇰🇷", "hk": "🇭🇰", "id": "🇮🇩", "vn": "🇻🇳",
+                        "th": "🇹🇭", "my": "🇲🇾", "ph": "🇵🇭", "mx": "🇲🇽", "ar": "🇦🇷", "cl": "🇨🇱", "co": "🇨🇴", "pe": "🇵🇪", "eg": "🇪🇬", "sa": "🇸🇦",
+                        "il": "🇮🇱", "pk": "🇵🇰", "bd": "🇧🇩", "ng": "🇳🇬", "ke": "🇰🇪", "dz": "🇩🇿", "ma": "🇲🇦", "tn": "🇹🇳", "iq": "🇮🇶", "sy": "🇸🇾",
+                        "ye": "🇾🇪", "lb": "🇱🇧", "jo": "🇯🇴", "kw": "🇰🇼", "qa": "🇶🇦", "bh": "🇧🇭", "om": "🇴🇲", "az": "🇦🇿", "am": "🇦🇲", "ge": "🇬🇪",
+                        "kz": "🇰🇿", "uz": "🇺🇿", "tm": "🇹🇲", "kg": "🇰🇬", "tj": "🇹🇯", "af": "🇦🇫", "np": "🇳🇵", "lk": "🇱🇰", "mm": "🇲🇲", "la": "🇱🇦",
+                        "kh": "🇰🇭", "mo": "🇲🇴", "mn": "🇲🇳", "nz": "🇳🇿", "at": "🇦🇹", "be": "🇧🇪", "dk": "🇩🇰", "gr": "🇬🇷", "hu": "🇭🇺", "ie": "🇮🇪",
+                        "lu": "🇱🇺", "pt": "🇵🇹", "ro": "🇷🇴", "sk": "🇸🇰", "si": "🇸🇮", "hr": "🇭🇷", "ba": "🇧🇦", "rs": "🇷🇸", "bg": "🇧🇬", "md": "🇲🇩",
+                        "al": "🇦🇱", "mk": "🇲🇰", "cy": "🇨🇾", "mt": "🇲🇹", "is": "🇮🇸", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪", "by": "🇧🇾",
+                        // Add more as needed, or a generic globe
+                        "unknown": "🌐"
+                    };
+                    emojiSpan.textContent = emojiMap[countryCode] || '🌐'; // Default to globe
+                    this.replaceWith(emojiSpan); // Replace img with span
+                };
+                flagContainer.appendChild(flagImg);
+            } else {
+                const unknownSpan = document.createElement('span');
+                unknownSpan.textContent = '❓'; // Use a question mark emoji for unknown
+                flagContainer.appendChild(unknownSpan);
+            }
+            card.appendChild(flagContainer);
+
+            // Proxy Type Tag
+            const typeTag = document.createElement('span');
+            typeTag.className = 'proxy-type-tag';
+            typeTag.textContent = item.protocol.toUpperCase();
+            card.appendChild(typeTag);
+
+            // Config title
+            const titleElement = document.createElement('h4');
+            titleElement.textContent = displayTitle;
+            card.appendChild(titleElement);
+
+            // Optional: Display more details if available
+            if (displayDetails) {
+                const detailsElement = document.createElement('p');
+                detailsElement.className = 'proxy-details'; // Use new class for styling
+                detailsElement.textContent = displayDetails;
+                card.appendChild(detailsElement);
+            }
+
+            // Action buttons container
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'proxy-actions';
+
+            // Test Config button
+            const testButton = document.createElement('button');
+            testButton.textContent = '⚡ تست کانفیگ';
+            testButton.onclick = () => {
+                testConfig(item.config);
+            };
+            actionsDiv.appendChild(testButton);
+
+            // Copy to clipboard button
+            const copyButton = document.createElement('button');
+            copyButton.textContent = '📋 کپی لینک';
+            copyButton.onclick = () => {
+                copyToClipboard(item.config);
+            };
+            actionsDiv.appendChild(copyButton);
+
+            // QR code button
+            const qrButton = document.createElement('button');
+            qrButton.textContent = '📸 نمایش QR کد';
+            qrButton.onclick = () => {
+                showQrCode(item.config);
+            };
+            actionsDiv.appendChild(qrButton);
+
+            card.appendChild(actionsDiv);
+
+            // Instructions section (simplified)
+            const instructionsDiv = document.createElement('div');
+            instructionsDiv.className = 'config-instructions';
+            instructionsDiv.innerHTML = `
+                <p><strong>راهنمای استفاده:</strong></p>
+                <ul>
+                    <li>برای تست کامل کانفیگ، روی دکمه "تست" کلیک کرده و به صفحه تست بروید. کانفیگ را در فیلد مربوطه وارد کنید، سرویس‌دهنده اینترنت خود را انتخاب و "جستجو از منابع دیگر" را بزنید. سپس در لیست IPها، با پینگ فعال بودن کانفیگ را بررسی و استفاده کنید.</li>
+                </ul>
+            `;
+            card.appendChild(instructionsDiv);
+
+
+            return card;
+        }
+
+        /**
+         * Loads a batch of proxies and appends them to the DOM.
+         */
+        async function loadMoreProxies() {
+            if (isLoading) {
+                return;
+            }
+
+            const filtered = filteredConfigurations; // Use the already filtered list
+            if (currentProxyIndex >= filtered.length) {
+                loadingMoreDiv.style.display = 'none';
+                if (filtered.length === 0 && proxiesDiv.innerHTML === '') {
+                    proxiesDiv.innerHTML = '<p class="loading-message" style="color:#ff6600;">هیچ نقطه اتصالی با فیلترهای انتخاب شده یافت نشد.</p>';
+                } else if (currentProxyIndex > 0) {
+                    loadingMoreDiv.textContent = 'تمام نقاط اتصال بارگذاری شدند.';
+                    loadingMoreDiv.style.display = 'block';
+                    loadingMoreDiv.style.color = '#555';
+                }
+                return;
+            }
+
+            isLoading = true;
+            loadingMoreDiv.style.display = 'block';
+            loadingMoreDiv.textContent = 'در حال بارگذاری نقاط اتصال بیشتر...';
+
+            const endIndex = Math.min(currentProxyIndex + proxiesPerLoad, filtered.length);
+            const batch = filtered.slice(currentProxyIndex, endIndex);
+
+            const fragment = document.createDocumentFragment();
+            
+            // Generate cards
+            for (const item of batch) {
+                const cardElement = createProxyCard(item);
+                fragment.appendChild(cardElement);
+            }
+            proxiesDiv.appendChild(fragment);
+
+            currentProxyIndex = endIndex;
+            isLoading = false;
+
+            if (currentProxyIndex < filtered.length) {
+                loadingMoreDiv.style.display = 'none';
+            } else {
+                loadingMoreDiv.textContent = 'تمام نقاط اتصال بارگذاری شدند.';
+                loadingMoreDiv.style.display = 'block';
+                loadingMoreDiv.style.color = '#555';
+            }
+        }
+
+        /**
+         * Handles the scroll event to trigger loading more proxies.
+         */
+        function handleScroll() {
+            const scrollThreshold = 100;
+            if (window.innerHeight + window.scrollY >= document.body.offsetHeight - scrollThreshold) {
+                loadMoreProxies();
+            }
+        }
+
+        /**
+         * Shows the QR code modal with the given text.
+         * @param {string} text - The text to encode in the QR code.
+         */
+        function showQrCode(text) {
+            // Clear previous QR code
+            const context = qrCanvas.getContext('2d');
+            context.clearRect(0, 0, qrCanvas.width, qrCanvas.height);
+
+            QRCode.toCanvas(qrCanvas, text, {
+                width: 250, // Fixed size for modal QR
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#ffffff'
+                }
+            }).catch(err => console.error('Error generating QR code:', err));
+            qrModal.classList.add('show');
+        }
+
+        qrModalClose.addEventListener('click', () => {
+            qrModal.classList.remove('show');
+        });
+
+        qrModal.addEventListener('click', (event) => {
+            if (event.target === qrModal) {
+                qrModal.classList.remove('show');
+            }
+        });
+
+
+        /**
+         * Formats time for display (MM:SS).
+         * @param {number} seconds - Total seconds.
+         * @returns {string} Formatted time string.
+         */
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            const paddedMinutes = String(minutes).padStart(2, '0');
+            const paddedSeconds = String(remainingSeconds).padStart(2, '0');
+            return `${paddedMinutes}:${paddedSeconds}`;
+        }
+
+        /**
+         * Main function to fetch all configurations, handle progress, and update UI.
+         * @param {boolean} forceFetch - If true, bypasses cache and forces a new fetch.
+         */
+        async function fetchAllConfigs(forceFetch = false) {
+            updateButton.disabled = true;
+            copyAllButton.disabled = true; // Disable copy all button during fetch
+
+            loadingSpinner.style.display = 'block';
+            progressSection.style.display = 'block';
+            proxiesDiv.innerHTML = ''; // Clear current display
+
+            let fetchedAndProcessedConfigs = [];
+            const totalSources = allFetchUrls.length;
+            let sourcesFetched = 0;
+            const startTime = Date.now();
+
+            clearInterval(timerInterval); // Clear any existing timer
+            timerInterval = setInterval(() => {
+                const elapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+                elapsedTimeSpan.textContent = formatTime(elapsedSeconds);
+            }, 1000);
+
+            for (const urlInfo of allFetchUrls) {
+                sourcesFetched++;
+                currentSourceSpan.textContent = `در حال واکشی منبع ${sourcesFetched} از ${totalSources}...`;
+                const progressPercentage = (sourcesFetched / totalSources) * 100;
+                progressBar.style.width = `${progressPercentage}%`;
+
+                const configs = await fetchContent(urlInfo);
+                fetchedAndProcessedConfigs = fetchedAndProcessedConfigs.concat(configs);
+            }
+
+            clearInterval(timerInterval);
+            const finalElapsedSeconds = Math.floor((Date.now() - startTime) / 1000);
+            elapsedTimeSpan.textContent = `زمان سپری شده: ${formatTime(finalElapsedSeconds)}`;
+            currentSourceSpan.textContent = `واکشی کامل شد.`;
+            
+            const uniqueConfigsMap = new Map();
+            fetchedAndProcessedConfigs.forEach(item => {
+                uniqueConfigsMap.set(item.config, item);
+            });
+            allConfigurations = Array.from(uniqueConfigsMap.values());
+            
+            saveConfigsToLocalStorage(allConfigurations);
+            updateFiltersAndCounts();
+            
+            loadingSpinner.style.display = 'none';
+            setTimeout(() => {
+                progressSection.style.display = 'none';
+                updateButton.disabled = false;
+                copyAllButton.disabled = false; // Re-enable copy all button
+            }, 2000);
+        }
+
+        // Event listeners
+        protocolFilterSelect.addEventListener('change', applyFilters);
+        countryFilterSelect.addEventListener('change', applyFilters);
+        updateButton.addEventListener('click', () => fetchAllConfigs(true)); // Force fetch on button click
+        copyAllButton.addEventListener('click', () => {
+            if (filteredConfigurations.length > 0) {
+                const allText = filteredConfigurations.map(item => item.config).join('\n');
+                copyToClipboard(allText);
+            } else {
+                showMessage('کانفیگی برای کپی کردن وجود ندارد.', 'error');
+            }
+        });
+        window.addEventListener('scroll', handleScroll);
+
+        // Initial load logic
+        window.onload = () => {
+            updateLastUpdatedTime();
+            if (!loadConfigsFromLocalStorage()) {
+                fetchAllConfigs(true); // If no valid cache, force a fetch
+            }
+        };
+    </script>
+</body>
+</html>
+�
