@@ -419,83 +419,6 @@
             border: 1px solid #eee;
             border-radius: 8px;
         }
-        /* New styles for LLM Explanation Modal */
-        .llm-modal {
-            position: fixed;
-            z-index: 1002; /* Higher than QR modal */
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
-        }
-        .llm-modal.show {
-            opacity: 1;
-            visibility: visible;
-        }
-        .llm-modal-content {
-            background-color: #fefefe;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            position: relative;
-            text-align: right; /* Align text right for Persian */
-            max-width: 500px; /* Wider for text */
-            width: 90%;
-            max-height: 80%; /* Limit height */
-            overflow-y: auto; /* Scroll if content is too long */
-        }
-        .llm-modal-close {
-            color: #aaa;
-            position: absolute;
-            top: 10px;
-            left: 15px; /* Position close button on left for RTL */
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-        }
-        .llm-modal-close:hover,
-        .llm-modal-close:focus {
-            color: #000;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        .llm-modal-content h3 {
-            margin-top: 0;
-            color: #0088cc;
-            font-size: 22px;
-            margin-bottom: 15px;
-            text-align: center; /* Center title */
-        }
-        .llm-explanation-text {
-            font-size: 15px;
-            color: #333;
-            line-height: 1.6;
-            white-space: pre-wrap; /* Preserve whitespace and line breaks */
-            text-align: justify; /* Justify text for better readability */
-        }
-        .llm-loading-spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #0088cc;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            animation: spin 1s linear infinite;
-            margin: 20px auto;
-            display: block;
-        }
-
-
         /* New styles for test result display */
         .test-result-display {
             margin-top: 10px;
@@ -592,16 +515,6 @@
                 <h3>کد QR کانفیگ</h3>
                 <canvas id="qrCanvas" class="qr-canvas"></canvas>
                 <p>این کد QR را با اپلیکیشن خود اسکن کنید.</p>
-            </div>
-        </div>
-
-        <!-- LLM Explanation Modal Structure -->
-        <div id="llmModal" class="llm-modal">
-            <div class="llm-modal-content">
-                <button id="llmModalClose" class="llm-modal-close">✖</button>
-                <h3>توضیح کانفیگ با هوش مصنوعی</h3>
-                <div id="llmExplanationSpinner" class="llm-loading-spinner"></div>
-                <p id="llmExplanationText" class="llm-explanation-text"></p>
             </div>
         </div>
 
@@ -707,12 +620,6 @@
         const qrModalClose = document.getElementById('qrModalClose');
         const qrCanvas = document.getElementById('qrCanvas');
         const filterBar = document.querySelector('.filter-bar'); // Get reference to filter bar
-
-        // LLM Explanation Modal elements
-        const llmModal = document.getElementById('llmModal');
-        const llmModalClose = document.getElementById('llmModalClose');
-        const llmExplanationText = document.getElementById('llmExplanationText');
-        const llmExplanationSpinner = document.getElementById('llmExplanationSpinner');
 
 
         let allConfigurations = [];
@@ -1027,7 +934,7 @@
                 console.error('Error during config test:', error);
                 // Changed error message as per user request
                 resultDisplayElement.innerHTML = "قابلیت تست کانفیگ غیرفعال است.";
-                resultDisplayElement.className = 'test-result-display show error';
+                resultResultDisplayElement.className = 'test-result-display show error';
             }
         }
 
@@ -1376,14 +1283,6 @@
             };
             actionsDiv.appendChild(qrButton);
 
-            // LLM Explain button
-            const llmExplainButton = document.createElement('button');
-            llmExplainButton.innerHTML = '<i class="fas fa-magic"></i> ✨ توضیح کانفیگ'; // Sparkle icon for LLM feature
-            llmExplainButton.onclick = () => {
-                explainConfig(item.config);
-            };
-            actionsDiv.appendChild(llmExplainButton);
-
             card.appendChild(actionsDiv);
             card.appendChild(testResultDisplay); // Append the test result display div here
 
@@ -1481,60 +1380,6 @@
                 qrModal.classList.remove('show');
             }
         });
-
-        /**
-         * Explains a V2Ray/Xray config using the Gemini API (LLM).
-         * @param {string} configString - The config string to explain.
-         */
-        async function explainConfig(configString) {
-            llmExplanationText.textContent = ''; // Clear previous explanation
-            llmExplanationSpinner.style.display = 'block'; // Show spinner
-            llmModal.classList.add('show'); // Show the modal
-
-            try {
-                let chatHistory = [];
-                const prompt = `این یک کانفیگ V2Ray/Xray است: \`${configString}\`. لطفاً آن را به زبان فارسی ساده توضیح دهید، شامل پروتکل، آدرس، پورت و نوع شبکه. همچنین به طور خلاصه بگویید این کانفیگ برای چه کاری استفاده می شود. پاسخ را به صورت متنی و خوانا ارائه دهید.`;
-                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
-
-                const payload = { contents: chatHistory };
-                const apiKey = ""; // Canvas will automatically provide it in runtime
-                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if (result.candidates && result.candidates.length > 0 &&
-                    result.candidates[0].content && result.candidates[0].content.parts &&
-                    result.candidates[0].content.parts.length > 0) {
-                    const text = result.candidates[0].content.parts[0].text;
-                    llmExplanationText.textContent = text;
-                } else {
-                    llmExplanationText.textContent = 'خطا در دریافت توضیح از هوش مصنوعی. لطفاً دوباره تلاش کنید.';
-                    console.error('Unexpected API response structure:', result);
-                }
-            } catch (error) {
-                llmExplanationText.textContent = 'خطا در برقراری ارتباط با هوش مصنوعی. لطفاً اتصال اینترنت خود را بررسی کنید.';
-                console.error('Error calling Gemini API:', error);
-            } finally {
-                llmExplanationSpinner.style.display = 'none'; // Hide spinner
-            }
-        }
-
-        llmModalClose.addEventListener('click', () => {
-            llmModal.classList.remove('show');
-        });
-
-        llmModal.addEventListener('click', (event) => {
-            if (event.target === llmModal) {
-                llmModal.classList.remove('show');
-            }
-        });
-
 
         /**
          * Formats time for display (MM:SS).
