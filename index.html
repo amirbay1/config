@@ -85,6 +85,12 @@
         .filter-group label {
             font-size: 14px;
             color: #555;
+            cursor: pointer; /* Indicate it's clickable */
+        }
+
+        .filter-group input[type="checkbox"] {
+            margin-left: 5px; /* Space between checkbox and label for RTL */
+            cursor: pointer;
         }
 
         .filter-group select {
@@ -118,7 +124,7 @@
             flex-direction: column;
             align-items: flex-start;
             transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effects */
-            position: relative; /* Needed for absolute positioning of flag */
+            position: relative; /* Needed for absolute positioning of tags */
         }
 
         .proxy-card:hover {
@@ -126,9 +132,7 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* Enhanced shadow on hover */
         }
 
-        /* Removed .flag-container styles as per user request */
-
-        .proxy-type-tag { /* Renamed from tag to proxy-type-tag */
+        .proxy-type-tag {
             position: absolute;
             top: 10px;
             left: 10px; /* Type tag on the left */
@@ -141,15 +145,30 @@
             z-index: 10;
         }
 
+        .national-tag {
+            position: absolute;
+            top: 10px;
+            right: 10px; /* Place it on the right side */
+            background-color: #ffc107; /* A distinct color, e.g., amber/gold */
+            color: #333;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            z-index: 10;
+        }
+        .national-tag i {
+            margin-left: 5px; /* Space between icon and text */
+        }
+
         .proxy-card h4 {
             margin: 0 0 5px; /* Reduced margin to fit details */
             font-size: 18px;
             word-break: break-all; /* Ensures long hostnames wrap */
             color: #00567e; /* Darker blue for host:port */
             font-weight: 600;
-            /* Adjusted padding since flag is removed */
-            padding-right: 0; 
-            padding-left: 60px; /* Adjust as needed based on tag size and desired spacing */
+            padding-left: 60px; /* Space for protocol tag */
+            padding-right: 60px; /* Space for national tag */
         }
 
         .proxy-details { /* New class for displaying details under title */
@@ -445,8 +464,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><i class="fas fa-lock"></i> لیست نقاط اتصال امن</h1> <!-- Changed icon -->
-            <button class="refresh-button" id="updateButton"><i class="fas fa-sync-alt"></i> بروزرسانی لیست</button> <!-- Changed icon -->
+            <h1><i class="fas fa-lock"></i> لیست نقاط اتصال امن</h1>
+            <button class="refresh-button" id="updateButton"><i class="fas fa-sync-alt"></i> بروزرسانی لیست</button>
             <div class="info-bar">
                 <span id="proxyCount">تعداد کل کانفیگ‌ها: 0</span>
                 <span id="lastUpdatedDate">آخرین بروزرسانی: --:--</span>
@@ -473,7 +492,11 @@
                     <!-- Options will be populated by JavaScript -->
                 </select>
             </div>
-            <button class="refresh-button" id="copyAllButton" style="background-color: #0088cc; margin-top: 0; display: none;"><i class="fas fa-copy"></i> کپی همه کانفیگ‌ها</button> <!-- Changed icon and hidden by default -->
+            <div class="filter-group">
+                <input type="checkbox" id="nationalFilter">
+                <label for="nationalFilter">فقط کانفیگ‌های ملی</label>
+            </div>
+            <button class="refresh-button" id="copyAllButton" style="background-color: #0088cc; margin-top: 0; display: none;"><i class="fas fa-copy"></i> کپی همه کانفیگ‌ها</button>
         </div>
 
         <!-- Progress and Timer Section -->
@@ -498,7 +521,7 @@
                 <button id="qrModalClose" class="qr-modal-close">✖</button>
                 <h3>کد QR کانفیگ</h3>
                 <canvas id="qrCanvas" class="qr-canvas"></canvas>
-                <p>این کد QR را با اپلیکیشن خود اسکن کنید.</p> <!-- Changed text -->
+                <p>این کد QR را با اپلیکیشن خود اسکن کنید.</p>
             </div>
         </div>
 
@@ -527,49 +550,31 @@
         // Mapping of country names (exactly as returned by getCountry) to 2-letter ISO codes for flags
         // This map is now only used for displaying Persian country names in the filter dropdown.
         const countryCodeMap = {
-            "Albania": "al", "Argentina": "ar", "Armenia": "am", "Australia": "au", "Austria": "at",
-            "Azerbaijan": "az", "Bahrain": "bh", "Belgium": "be", "Bolivia": "bo",
-            "Bosnia and Herzegovina": "ba",
-            "Brazil": "br", "Bulgaria": "bg", "Canada": "ca", "Chile": "cl", "China": "cn", "Colombia": "co",
-            "Costa Rica": "cr",
-            "Croatia": "hr", "Cyprus": "cy", "Czechia": "cz",
-            "Denmark": "dk", "Ecuador": "ec", "Estonia": "ee", "Finland": "fi", "France": "fr", "Germany": "de",
-            "Gibraltar": "gi", "Greece": "gr", "Hong Kong": "hk",
-            "Hungary": "hu", "Iceland": "is", "India": "in", "Indonesia": "id", "Iran": "ir", "Ireland": "ie", "Israel": "il",
-            "Italy": "it", "Japan": "jp", "Kazakhstan": "kz", "Latvia": "lv", "Lithuania": "lt", "Luxembourg": "lu", "Malaysia": "my", "Malta": "mt",
-            "Mauritius": "mu", "Mexico": "mx", "Moldova": "md",
-            "New Zealand": "nz",
-            "North Macedonia": "mk",
-            "Norway": "no", "Paraguay": "py", "Poland": "pl", "Portugal": "pt", "Puerto Rico": "pr", "Romania": "ro",
-            "Russia": "ru", "Serbia": "rs", "Seychelles": "sc", "Singapore": "sg", "Slovakia": "sk", "Slovenia": "si",
-            "South Africa": "za",
-            "South Korea": "kr",
-            "Spain": "es", "Sweden": "se", "Switzerland": "ch", "Taiwan": "tw",
-            "Thailand": "th",
-            "The Netherlands": "nl",
-            "Türkiye": "tr", "Ukraine": "ua",
-            "United Arab Emirates": "ae",
-            "United Kingdom": "gb",
-            "United States": "us",
-            "Unknown": "unknown",
-            "Vietnam": "vn"
-        };
-
-        // Mapping of country codes to Persian names (for display in dropdown)
-        const countryNamesFa = {
-            "al": "آلبانی", "ar": "آرژانتین", "am": "ارمنستان", "au": "استرالیا", "at": "اتریش", "az": "آذربایجان",
-            "bh": "بحرین", "be": "بلژیک", "bo": "بولیوی", "ba": "بوسنی و هرزگوین", "br": "برزیل", "bg": "بلغارستان",
-            "ca": "کانادا", "cl": "شیلی", "cn": "چین", "co": "کلمبیا", "cr": "کاستاریکا", "hr": "کرواسی",
-            "cy": "قبرس", "cz": "جمهوری چک", "de": "آلمان", "dk": "دانمارک", "ec": "اکوادور", "ee": "استونی",
-            "fi": "فنلاند", "fr": "فرانسه", "gi": "جبل‌الطارق", "gr": "یونان", "hk": "هنگ کنگ", "hu": "مجارستان",
-            "is": "ایسلند", "in": "هند", "id": "اندونزی", "ir": "ایران", "ie": "ایرلند", "il": "اسرائیل",
-            "it": "ایتالیا", "jp": "ژاپن", "kz": "قزاقستان", "lv": "لتونی", "lt": "لیتوانی", "lu": "لوکزامبورگ",
-            "my": "مالزی", "mt": "مالت", "mu": "موریس", "mx": "مکزیک", "md": "مولداوی", "nz": "نیوزلند",
-            "mk": "مقدونیه شمالی", "no": "نروژ", "py": "پاراگوئه", "pl": "لهستان", "pt": "پرتغال", "pr": "پورتوریکو",
-            "ro": "رومانی", "ru": "روسیه", "rs": "صربستان", "sc": "سیشل", "sg": "سنگاپور", "sk": "اسلواکی",
-            "si": "اسلوونی", "za": "آفریقای جنوبی", "kr": "کره جنوبی", "es": "اسپانیا", "se": "سوئد", "ch": "سوئیس",
-            "tw": "تایوان", "th": "تایلند", "nl": "هلند", "tr": "ترکیه", "ua": "اوکراین", "ae": "امارات متحده عربی",
-            "gb": "بریتانیا", "us": "ایالات متحده", "vn": "ویتنام", "unknown": "نامعلوم"
+            "al": "آلبانی", "ar": "آرژانتین", "am": "ارمنستان", "au": "استرالیا", "at": "اتریش",
+            "az": "آذربایجان", "bh": "بحرین", "be": "بلژیک", "bo": "بولیوی",
+            "ba": "بوسنی و هرزگوین",
+            "br": "برزیل", "bg": "بلغارستان", "ca": "کانادا", "cl": "شیلی", "cn": "چین", "co": "کلمبیا",
+            "cr": "کاستاریکا",
+            "hr": "کرواسی", "cy": "قبرس", "cz": "جمهوری چک",
+            "dk": "دانمارک", "ec": "اکوادور", "ee": "استونی", "fi": "فنلاند", "fr": "فرانسه", "de": "آلمان",
+            "gi": "جبل‌الطارق", "gr": "یونان", "hk": "هنگ کنگ",
+            "hu": "مجارستان", "is": "ایسلند", "in": "هند", "id": "اندونزی", "ir": "ایران", "ie": "ایرلند", "il": "اسرائیل",
+            "it": "ایتالیا", "jp": "ژاپن", "kz": "قزاقستان", "lv": "لتونی", "lt": "لیتوانی", "lu": "لوکزامبورگ", "my": "مالزی", "mt": "مالت",
+            "mu": "موریس", "mx": "مکزیک", "md": "مولداوی",
+            "nz": "نیوزلند",
+            "mk": "مقدونیه شمالی",
+            "no": "نروژ", "py": "پاراگوئه", "pl": "لهستان", "pt": "پرتغال", "pr": "پورتوریکو", "ro": "رومانی",
+            "ru": "روسیه", "rs": "صربستان", "sc": "سیشل", "sg": "سنگاپور", "sk": "اسلواکی", "si": "اسلوونی",
+            "za": "آفریقای جنوبی",
+            "kr": "کره جنوبی",
+            "es": "اسپانیا", "se": "سوئد", "ch": "سوئیس", "tw": "تایوان",
+            "th": "تایلند",
+            "nl": "هلند",
+            "tr": "ترکیه", "ua": "اوکراین",
+            "ae": "امارات متحده عربی",
+            "gb": "بریتانیا",
+            "us": "ایالات متحده",
+            "vn": "ویتنام", "unknown": "نامعلوم"
         };
 
 
@@ -580,6 +585,7 @@
         const loadingMoreDiv = document.getElementById('loadingMore');
         const protocolFilterSelect = document.getElementById('protocolFilter');
         const countryFilterSelect = document.getElementById('countryFilter');
+        const nationalFilterCheckbox = document.getElementById('nationalFilter'); // New: Get national filter checkbox
         const updateButton = document.getElementById('updateButton');
         const copyAllButton = document.getElementById('copyAllButton');
         const loadingSpinner = document.getElementById('loading');
@@ -602,6 +608,9 @@
 
         const CACHE_KEY = 'v2ray_configs_cache';
         const CACHE_EXPIRATION_MS = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+        // Specific URL for Iran configs from SoliSpirit, to force its country to "Iran"
+        const IRAN_CONFIG_URL = "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/Iran.txt";
 
         // List of V2Ray/Xray URLs to fetch
         const directUrls = [
@@ -649,8 +658,13 @@
         }
 
         // Add country-specific URLs to directUrls, using the underscored version for the URL path
+        // Ensure IRAN_CONFIG_URL is explicitly added here if not already covered by the filter.
+        // It's already handled by the filter below, but good to be explicit for clarity.
         countries.filter(c => c !== "Unknown").forEach(country => {
-            directUrls.push(`https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/${country.replace(/ /g, '_')}.txt`);
+            const countryRawUrl = `https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/main/Countries/${country.replace(/ /g, '_')}.txt`;
+            if (!directUrls.includes(countryRawUrl)) { // Avoid duplicates if already added
+                directUrls.push(countryRawUrl);
+            }
         });
 
         // Combined list of all URLs to fetch
@@ -761,7 +775,7 @@
             const lowerCaseConfig = config.toLowerCase();
             for (const country of countries) {
                 // Check for full country name (with spaces) in the config string
-                if (lowerCaseConfig.includes(country.toLowerCase())) {
+                if (lowerCaseLine.includes(country.toLowerCase())) {
                     return country; // Return the clean name
                 }
             }
@@ -904,7 +918,7 @@
         /**
          * Fetches content from a URL, optionally decodes Base64, and extracts configs.
          * @param {Object} urlInfo - Object containing url and decode flag.
-         * @returns {Array<Object>} Array of config objects {config: string, protocol: string, country: string}.
+         * @returns {Array<Object>} Array of config objects {config: string, protocol: string, country: string, isNational: boolean}.
          */
         async function fetchContent(urlInfo) {
             const { url, decode } = urlInfo;
@@ -922,31 +936,90 @@
                 }
                 let text = await response.text();
 
+                let linesToProcess = [];
+
                 if (decode) {
                     try {
-                        text = atob(text); // Base64 decode
+                        // First level decode: the entire file content is Base64 encoded
+                        text = atob(text);
                     } catch (e) {
-                        console.warn(`Warning: Base64 decoding failed for ${url}. Attempting to use raw content. Error:`, e);
+                        console.warn(`Warning: Initial Base64 decoding failed for ${url}. Attempting to use raw content. Error:`, e);
+                        // If initial decode fails, treat as direct content
                     }
                 }
-
-                const rawConfigs = text.split('\n')
-                                    .map(line => line.trim())
-                                    .filter(line => {
-                                        const lowerCaseLine = line.toLowerCase();
-                                        return lowerCaseLine.startsWith('vmess://') ||
-                                               lowerCaseLine.startsWith('vless://') ||
-                                               lowerCaseLine.startsWith('trojan://') ||
-                                               lowerCaseLine.startsWith('ss://') ||
-                                               lowerCaseLine.startsWith('ssr://') ||
-                                               lowerCaseLine.startsWith('warp://');
-                                    });
                 
-                return rawConfigs.map(config => ({
-                    config: config,
-                    protocol: getProtocol(config),
-                    country: getCountry(config)
-                }));
+                // Split by lines
+                const rawLines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
+
+                for (const line of rawLines) {
+                    const lowerCaseLine = line.toLowerCase();
+                    // If it already starts with a known protocol, use it as is
+                    if (lowerCaseLine.startsWith('vmess://') ||
+                        lowerCaseLine.startsWith('vless://') ||
+                        lowerCaseLine.startsWith('trojan://') ||
+                        lowerCaseLine.startsWith('ss://') ||
+                        lowerCaseLine.startsWith('ssr://') ||
+                        lowerCaseLine.startsWith('warp://')) {
+                        linesToProcess.push(line);
+                    } else {
+                        // Otherwise, try to Base64 decode the line itself and then detect protocol
+                        try {
+                            const decodedLine = atob(line);
+                            const decodedLowerCaseLine = decodedLine.toLowerCase();
+                            // Check if the decoded line starts with any known protocol
+                            if (decodedLowerCaseLine.startsWith('vmess://')) {
+                                linesToProcess.push(decodedLine);
+                            } else if (decodedLowerCaseLine.startsWith('vless://')) {
+                                linesToProcess.push(decodedLine);
+                            } else if (decodedLowerCaseLine.startsWith('trojan://')) {
+                                linesToProcess.push(decodedLine);
+                            } else if (decodedLowerCaseLine.startsWith('ss://')) {
+                                linesToProcess.push(decodedLine);
+                            } else if (decodedLowerCaseLine.startsWith('ssr://')) {
+                                linesToProcess.push(decodedLine);
+                            } else if (decodedLowerCaseLine.startsWith('warp://')) {
+                                linesToProcess.push(decodedLine);
+                            } else {
+                                // If it's a raw Base64 JSON (like the user's example), try to parse it
+                                // and prepend 'vmess://' if it looks like a VMess JSON
+                                try {
+                                    const jsonConfig = JSON.parse(decodedLine);
+                                    // Basic check for VMess JSON structure
+                                    if (jsonConfig.v && jsonConfig.ps && jsonConfig.add && jsonConfig.port && jsonConfig.id) {
+                                        // Re-encode to Base64 and prepend vmess://
+                                        // Use encodeURIComponent and unescape for Unicode characters before btoa
+                                        linesToProcess.push(`vmess://${btoa(unescape(encodeURIComponent(decodedLine)))}`);
+                                    } else {
+                                        // Still unknown, discard or log
+                                        console.warn(`Unknown decoded line format (not a recognized protocol or VMess JSON): ${decodedLine.substring(0, Math.min(decodedLine.length, 100))}...`);
+                                    }
+                                } catch (jsonParseError) {
+                                    // Not a valid JSON, discard
+                                    // console.warn(`Line is not a direct config link, nor a decodable config link, nor a valid JSON after Base64 decode: ${line.substring(0, Math.min(line.length, 50))}...`);
+                                }
+                            }
+                        } catch (e) {
+                            // Line is not Base64 decodable, discard
+                            // console.warn(`Line is not a direct config link, nor Base64 decodable: ${line.substring(0, Math.min(line.length, 50))}...`);
+                        }
+                    }
+                }
+                
+                return linesToProcess.map(config => {
+                    let detectedCountry = getCountry(config);
+                    let isNational = false; // Default to false
+                    // Force country to "Iran" and mark as national if the config came from the specific Iran URL
+                    if (url === IRAN_CONFIG_URL) {
+                        detectedCountry = 'Iran';
+                        isNational = true;
+                    }
+                    return {
+                        config: config,
+                        protocol: getProtocol(config),
+                        country: detectedCountry,
+                        isNational: isNational // Add this property
+                    };
+                });
 
             } catch (error) {
                 console.error(`Network or processing error for ${url}:`, error);
@@ -1089,11 +1162,14 @@
         function applyFilters() {
             const selectedProtocol = protocolFilterSelect.value;
             const selectedCountry = countryFilterSelect.value;
+            const showNationalOnly = nationalFilterCheckbox.checked; // Get checkbox state
 
             filteredConfigurations = allConfigurations.filter(item => {
                 const matchesProtocol = selectedProtocol === 'all' || item.protocol === selectedProtocol;
                 const matchesCountry = selectedCountry === 'all' || item.country === selectedCountry;
-                return matchesProtocol && matchesCountry;
+                const matchesNational = !showNationalOnly || item.isNational; // If checkbox is checked, only show national
+
+                return matchesProtocol && matchesCountry && matchesNational;
             });
 
             // Reset current index and clear display before loading filtered results
@@ -1104,7 +1180,7 @@
 
         /**
          * Creates an HTML card for a given V2Ray/Xray config.
-         * @param {Object} item - The config object {config: string, protocol: string, country: string}.
+         * @param {Object} item - The config object {config: string, protocol: string, country: string, isNational: boolean}.
          * @returns {HTMLElement} The created card element.
          */
         function createProxyCard(item) {
@@ -1114,50 +1190,19 @@
             // Parse config for display title and details
             const { displayTitle, displayDetails } = parseV2rayConfigForDisplay(item.config);
 
-            // Removed Flag container as per user request
-            /*
-            const flagContainer = document.createElement('div');
-            flagContainer.className = 'flag-container';
-            const countryCode = countryCodeMap[item.country.toLowerCase()]; // Get 2-letter code from map
-            if (countryCode && countryCode !== 'unknown') {
-                const flagImg = document.createElement('img');
-                flagImg.src = `https://flagcdn.com/w32/${countryCode}.png`;
-                flagImg.alt = `پرچم ${countryNamesFa[countryCode] || item.country}`;
-                flagImg.onerror = function() {
-                    this.onerror = null;
-                    // Fallback to emoji if image fails
-                    const emojiSpan = document.createElement('span');
-                    const emojiMap = {
-                        "us": "🇺🇸", "de": "🇩🇪", "🇫🇷": "�🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
-                        "ae": "🇦🇪", "nl": "🇳🇱", "sg": "🇸🇬", "in": "🇮🇳", "br": "🇧🇷", "ua": "🇺🇦", "tr": "🇹🇷", "se": "🇸🇪", "fi": "🇫🇮", "no": "🇳🇴",
-                        "ch": "🇨🇭", "es": "🇪🇸", "it": "🇮🇹", "pl": "🇵🇱", "cz": "🇨🇿", "za": "🇿🇦", "kr": "🇰🇷", "hk": "🇭🇰", "id": "🇮🇩", "vn": "🇻🇳",
-                        "th": "🇹🇭", "my": "🇲🇾", "ph": "🇵🇭", "mx": "🇲🇽", "ar": "🇦🇷", "cl": "🇨🇱", "co": "🇨🇴", "pe": "🇵🇪", "eg": "🇪🇬", "sa": "🇸🇦",
-                        "il": "🇮🇱", "pk": "🇵🇰", "bd": "🇧🇩", "ng": "🇳🇬", "ke": "🇰🇪", "dz": "🇩🇿", "ma": "🇲🇦", "tn": "🇹🇳", "iq": "🇮🇶", "sy": "🇸🇾",
-                        "ye": "🇾🇪", "lb": "🇱🇧", "jo": "🇯🇴", "kw": "🇰🇼", "qa": "🇶🇦", "bh": "🇧🇭", "om": "🇴🇲", "az": "🇦🇿", "am": "🇦🇲", "ge": "🇬🇪",
-                        "kz": "🇰🇿", "uz": "🇺🇿", "tm": "🇹🇲", "kg": "🇰🇬", "tj": "🇹🇯", "af": "🇦🇫", "np": "🇳🇵", "lk": "🇱🇰", "mm": "🇲🇲", "la": "🇱🇦",
-                        "kh": "🇰🇭", "mo": "🇲🇴", "mn": "🇲🇳", "nz": "🇳🇿", "at": "🇦🇹", "be": "🇧🇪", "dk": "🇩🇰", "gr": "🇬🇷", "hu": "🇭🇺", "ie": "🇮🇪",
-                        "lu": "🇱🇺", "pt": "🇵🇹", "ro": "🇷🇴", "sk": "🇸🇰", "si": "🇸🇮", "hr": "🇭🇷", "ba": "🇧🇦", "rs": "🇷🇸", "bg": "🇧🇬", "md": "🇲🇩",
-                        "al": "🇦🇱", "mk": "🇲🇰", "cy": "🇨🇾", "mt": "🇲🇹", "is": "🇮🇸", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪", "by": "🇧🇾",
-                        // Add more as needed, or a generic globe
-                        "unknown": "🌐"
-                    };
-                    emojiSpan.textContent = emojiMap[countryCode] || '🌐'; // Default to globe
-                    this.replaceWith(emojiSpan); // Replace img with span
-                };
-                flagContainer.appendChild(flagImg);
-            } else {
-                const unknownSpan = document.createElement('span');
-                unknownSpan.textContent = '❓'; // Use a question mark emoji for unknown
-                flagContainer.appendChild(unknownSpan);
-            }
-            card.appendChild(flagContainer);
-            */
-
             // Proxy Type Tag
             const typeTag = document.createElement('span');
             typeTag.className = 'proxy-type-tag';
             typeTag.textContent = item.protocol.toUpperCase();
             card.appendChild(typeTag);
+
+            // National Tag (if applicable)
+            if (item.isNational) {
+                const nationalTag = document.createElement('span');
+                nationalTag.className = 'national-tag';
+                nationalTag.innerHTML = '<i class="fas fa-flag"></i> ملی'; // Using a flag icon for national
+                card.appendChild(nationalTag);
+            }
 
             // Config title
             const titleElement = document.createElement('h4');
@@ -1206,21 +1251,6 @@
 
             card.appendChild(actionsDiv);
             card.appendChild(testResultDisplay); // Append the test result display div here
-
-            // Removed instructions section as per user request
-            /*
-            const instructionsDiv = document.createElement('div');
-            instructionsDiv.className = 'config-instructions';
-            instructionsDiv.innerHTML = `
-                <p><strong>راهنمای استفاده:</strong></p>
-                <ul>
-                    <li>کانفیگ را با دکمه "📋 کپی لینک" کپی کنید.</li>
-                    <li>برای تست واقعی (پینگ و فعال بودن)، روی "⚡ تست کانفیگ" کلیک کنید.</li>
-                    <li>برای اسکن با گوشی، روی "📸 نمایش QR کد" کلیک کنید.</li>
-                </ul>
-            `;
-            card.appendChild(instructionsDiv);
-            */
 
             return card;
         }
@@ -1380,15 +1410,23 @@
             setTimeout(() => {
                 progressSection.style.display = 'none';
                 updateButton.disabled = false;
-                copyAllButton.disabled = false; // Re-enable copy all button
-                filterBar.style.display = 'flex'; // Show filters after fetch
-                copyAllButton.style.display = 'block'; // Show copy all button after fetch
+                // Only show filters and copy all button if there are configs
+                if (allConfigurations.length > 0) {
+                    copyAllButton.disabled = false; // Re-enable copy all button
+                    filterBar.style.display = 'flex'; // Show filters after fetch
+                    copyAllButton.style.display = 'block'; // Show copy all button after fetch
+                } else {
+                    copyAllButton.disabled = true; // Keep disabled if no configs
+                    filterBar.style.display = 'none'; // Keep hidden if no configs
+                    copyAllButton.style.display = 'none'; // Keep hidden if no configs
+                }
             }, 2000);
         }
 
         // Event listeners
         protocolFilterSelect.addEventListener('change', applyFilters);
         countryFilterSelect.addEventListener('change', applyFilters);
+        nationalFilterCheckbox.addEventListener('change', applyFilters); // New: Add event listener for national filter
         updateButton.addEventListener('click', () => fetchAllConfigs(true)); // Force fetch on button click
         copyAllButton.addEventListener('click', () => {
             if (filteredConfigurations.length > 0) {
