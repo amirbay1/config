@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نقاط اتصال امن V2Ray/Xray</title>
+    <title>نقاط اتصال امن</title> <!-- Changed title -->
     <!-- QR code library -->
     <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
     <!-- LZ-String library for compression -->
@@ -65,12 +65,13 @@
         }
 
         .filter-bar {
-            display: flex;
+            display: flex; /* Changed to flex to control visibility via JS */
             flex-wrap: wrap;
             gap: 15px;
             margin-bottom: 20px;
             justify-content: center;
             width: 100%;
+            display: none; /* Hidden by default, shown after fetch completes */
         }
 
         .filter-group {
@@ -475,7 +476,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔒 لیست نقاط اتصال امن V2Ray/Xray</h1>
+            <h1>🔒 لیست نقاط اتصال امن</h1> <!-- Changed h1 text -->
             <button class="refresh-button" id="updateButton">⟳ بروزرسانی لیست</button>
             <div class="info-bar">
                 <span id="proxyCount">تعداد کل کانفیگ‌ها: 0</span>
@@ -503,7 +504,7 @@
                     <!-- Options will be populated by JavaScript -->
                 </select>
             </div>
-            <button class="refresh-button" id="copyAllButton" style="background-color: #0088cc; margin-top: 0;">📋 کپی همه کانفیگ‌ها</button>
+            <button class="refresh-button" id="copyAllButton" style="background-color: #0088cc; margin-top: 0; display: none;">📋 کپی همه کانفیگ‌ها</button> <!-- Hidden by default -->
         </div>
 
         <!-- Progress and Timer Section -->
@@ -528,7 +529,7 @@
                 <button id="qrModalClose" class="qr-modal-close">✖</button>
                 <h3>کد QR کانفیگ</h3>
                 <canvas id="qrCanvas" class="qr-canvas"></canvas>
-                <p>این کد QR را با اپلیکیشن V2Ray/Xray خود اسکن کنید.</p>
+                <p>این کد QR را با اپلیکیشن خود اسکن کنید.</p> <!-- Changed text -->
             </div>
         </div>
 
@@ -620,6 +621,7 @@
         const qrModal = document.getElementById('qrModal');
         const qrModalClose = document.getElementById('qrModalClose');
         const qrCanvas = document.getElementById('qrCanvas');
+        const filterBar = document.querySelector('.filter-bar'); // Get reference to filter bar
 
         let allConfigurations = [];
         let filteredConfigurations = [];
@@ -646,6 +648,9 @@
             "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/vless.txt",
             "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/trojan.txt",
             "https://raw.githubusercontent.com/SoliSpirit/v2ray-configs/refs/heads/main/Protocols/ss.txt",
+            "https://raw.githubusercontent.com/hamedp-71/openproxylist/refs/heads/main/V2RAY.txt",
+            "https://raw.githubusercontent.com/hamedp-71/Trojan/refs/heads/main/hp.txt",
+            "https://raw.githubusercontent.com/hamedp-71/openproxylist/refs/heads/main/V2RAY_RAW.txt"
         ];
 
         const base64Urls = [
@@ -656,6 +661,9 @@
             "https://proxy.v2gh.com/https://raw.githubusercontent.com/Pawdroid/Free-servers/main/sub",
             "https://raw.githubusercontent.com/AzadNetCH/Clash/main/AzadNet.txt",
             "https://raw.githubusercontent.com/mahsanet/MahsaFreeConfig/main/app/sub.txt",
+            "https://raw.githubusercontent.com/davudsedft/purvpn/refs/heads/main/links/pc.txt",
+            "https://raw.githubusercontent.com/hamedp-71/openproxylist/refs/heads/main/V2RAY_BASE64.txt",
+            "https://raw.githubusercontent.com/davudsedft/purvpn/refs/heads/main/links/purkow.txt"
         ];
 
         // Add ranged URLs
@@ -695,7 +703,7 @@
             } else {
                 const existingEntry = allFetchUrls.find(entry => entry.url === rawUrl);
                 if (existingEntry) {
-                    existingEntry.decode = true;
+                    existingEntry.decode = true; // Ensure it's marked for decoding if it's in base64Urls
                 }
             }
         });
@@ -884,7 +892,7 @@
 
         /**
          * Sends the config to the backend for real testing and displays the result.
-         * @param {string} configString - The V2Ray/Xray config string.
+         * @param {string} configString - The config string.
          * @param {HTMLElement} resultDisplayElement - The DOM element to display the result in.
          */
         async function testConfig(configString, resultDisplayElement) {
@@ -913,32 +921,12 @@
                 } else {
                     resultDisplayElement.innerHTML = `نقطه ی اتصال غیرفعال است. دلیل: ${result.reason || 'نامشخص'}`;
                     resultDisplayElement.className = 'test-result-display show error';
-                    // Optionally, add a button to open the external tester site here if needed
-                    const testSiteButton = document.createElement('button');
-                    testSiteButton.textContent = 'باز کردن سایت تست ircfspace';
-                    testSiteButton.style.marginTop = '5px';
-                    testSiteButton.style.backgroundColor = '#f0f0f0';
-                    testSiteButton.style.color = '#333';
-                    testSiteButton.onclick = () => {
-                        window.open('https://ircfspace.github.io/tester/', '_blank');
-                    };
-                    resultDisplayElement.appendChild(testSiteButton);
                 }
 
             } catch (error) {
                 console.error('Error during config test:', error);
                 resultDisplayElement.innerHTML = `خطا در تست کانفیگ: ${error.message}.`;
                 resultDisplayElement.className = 'test-result-display show error';
-                // Optionally, add a button to open the external tester site here if needed
-                const testSiteButton = document.createElement('button');
-                testSiteButton.textContent = 'باز کردن سایت تست ircfspace';
-                testSiteButton.style.marginTop = '5px';
-                testSiteButton.style.backgroundColor = '#f0f0f0';
-                testSiteButton.style.color = '#333';
-                testSiteButton.onclick = () => {
-                    window.open('https://ircfspace.github.io/tester/', '_blank');
-                };
-                resultDisplayElement.appendChild(testSiteButton);
             }
         }
 
@@ -1009,7 +997,6 @@
                 const compressedString = LZString.compressToBase64(jsonString);
                 localStorage.setItem(CACHE_KEY, compressedString);
                 localStorage.setItem('lastUpdated', Date.now()); // Keep this separate for simplicity of display
-                updateLastUpdatedTime();
                 showGlobalMessage('کانفیگ‌ها با موفقیت ذخیره شدند.', 'success');
             } catch (e) {
                 console.error('Error saving configs to Local Storage:', e);
@@ -1170,7 +1157,7 @@
                     const emojiSpan = document.createElement('span');
                     // Simple emoji mapping for common flags, or a generic globe
                     const emojiMap = {
-                        "us": "🇺🇸", "de": "🇩🇪", "fr": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
+                        "us": "🇺🇸", "de": "�🇪", "🇫🇷": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
                         "ae": "🇦🇪", "nl": "🇳🇱", "sg": "🇸🇬", "in": "🇮🇳", "br": "🇧🇷", "ua": "🇺🇦", "tr": "🇹🇷", "se": "🇸🇪", "fi": "🇫🇮", "no": "🇳🇴",
                         "ch": "🇨🇭", "es": "🇪🇸", "it": "🇮🇹", "pl": "🇵🇱", "cz": "🇨🇿", "za": "🇿🇦", "kr": "🇰🇷", "hk": "🇭🇰", "id": "🇮🇩", "vn": "🇻🇳",
                         "th": "🇹🇭", "my": "🇲🇾", "ph": "🇵🇭", "mx": "🇲🇽", "ar": "🇦🇷", "cl": "🇨🇱", "co": "🇨🇴", "pe": "🇵🇪", "eg": "🇪🇬", "sa": "🇸🇦",
@@ -1179,7 +1166,7 @@
                         "kz": "🇰🇿", "uz": "🇺🇿", "tm": "🇹🇲", "kg": "🇰🇬", "tj": "🇹🇯", "af": "🇦🇫", "np": "🇳🇵", "lk": "🇱🇰", "mm": "🇲🇲", "la": "🇱🇦",
                         "kh": "🇰🇭", "mo": "🇲🇴", "mn": "🇲🇳", "nz": "🇳🇿", "at": "🇦🇹", "be": "🇧🇪", "dk": "🇩🇰", "gr": "🇬🇷", "hu": "🇭🇺", "ie": "🇮🇪",
                         "lu": "🇱🇺", "pt": "🇵🇹", "ro": "🇷🇴", "sk": "🇸🇰", "si": "🇸🇮", "hr": "🇭🇷", "ba": "🇧🇦", "rs": "🇷🇸", "bg": "🇧🇬", "md": "🇲🇩",
-                        "al": "🇦�", "mk": "🇲🇰", "cy": "🇨🇾", "mt": "🇲🇹", "is": "🇮🇸", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪", "by": "🇧🇾",
+                        "al": "🇦🇱", "mk": "🇲🇰", "cy": "🇨🇾", "mt": "🇲🇹", "is": "🇮🇸", "lt": "🇱🇹", "lv": "🇱🇻", "ee": "🇪🇪", "by": "🇧🇾",
                         // Add more as needed, or a generic globe
                         "unknown": "🌐"
                     };
@@ -1248,7 +1235,8 @@
             card.appendChild(actionsDiv);
             card.appendChild(testResultDisplay); // Append the test result display div here
 
-            // Instructions section (simplified)
+            // Removed instructions section as per user request
+            /*
             const instructionsDiv = document.createElement('div');
             instructionsDiv.className = 'config-instructions';
             instructionsDiv.innerHTML = `
@@ -1260,7 +1248,7 @@
                 </ul>
             `;
             card.appendChild(instructionsDiv);
-
+            */
 
             return card;
         }
@@ -1375,6 +1363,7 @@
         async function fetchAllConfigs(forceFetch = false) {
             updateButton.disabled = true;
             copyAllButton.disabled = true; // Disable copy all button during fetch
+            filterBar.style.display = 'none'; // Ensure filters are hidden at start of fetch
 
             loadingSpinner.style.display = 'block';
             progressSection.style.display = 'block';
@@ -1420,6 +1409,8 @@
                 progressSection.style.display = 'none';
                 updateButton.disabled = false;
                 copyAllButton.disabled = false; // Re-enable copy all button
+                filterBar.style.display = 'flex'; // Show filters after fetch
+                copyAllButton.style.display = 'block'; // Show copy all button after fetch
             }, 2000);
         }
 
@@ -1447,3 +1438,4 @@
     </script>
 </body>
 </html>
+�
