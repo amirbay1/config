@@ -147,8 +147,8 @@
 
         .national-tag {
             position: absolute;
-            top: 10px;
-            right: 10px; /* Place it on the right side */
+            top: 40px; /* Adjusted position to be below protocol tag */
+            left: 10px; /* Aligned with protocol tag */
             background-color: #ffc107; /* A distinct color, e.g., amber/gold */
             color: #333;
             padding: 4px 8px;
@@ -167,8 +167,8 @@
             word-break: break-all; /* Ensures long hostnames wrap */
             color: #00567e; /* Darker blue for host:port */
             font-weight: 600;
-            padding-left: 60px; /* Space for protocol tag */
-            padding-right: 60px; /* Space for national tag */
+            padding-left: 100px; /* Increased padding to make space for both tags */
+            padding-right: 20px; /* Removed right padding if not needed, or adjust as necessary */
         }
 
         .proxy-details { /* New class for displaying details under title */
@@ -1106,6 +1106,12 @@
                         allConfigurations = proxies;
                         updateFiltersAndCounts(); // Update counts and apply filters from loaded data
                         showGlobalMessage('کانفیگ‌ها از حافظه محلی بارگذاری شدند.', 'success');
+                        // Show filters and copy all button if configs are loaded
+                        if (allConfigurations.length > 0) {
+                            filterBar.style.display = 'flex';
+                            copyAllButton.style.display = 'block';
+                            copyAllButton.disabled = false;
+                        }
                         return true;
                     } else {
                         console.log('Cached data expired. Will fetch new data.');
