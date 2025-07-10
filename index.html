@@ -10,6 +10,8 @@
     <script src="https://cdn.jsdelivr.net/npm/lz-string@1.4.4/libs/lz-string.min.js"></script>
     <!-- Inter font import -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         /* Base styles matching the tgp theme */
         body {
@@ -124,32 +126,7 @@
             box-shadow: 0 8px 20px rgba(0,0,0,0.15); /* Enhanced shadow on hover */
         }
 
-        .flag-container {
-            position: absolute;
-            top: 10px;
-            right: 10px; /* Flag on the right */
-            width: 32px; /* Size for flag image */
-            height: 24px; /* Maintain aspect ratio */
-            overflow: hidden; /* Hide parts of image if not perfectly sized */
-            border-radius: 4px; /* Slightly rounded corners for flags */
-            box-shadow: 0 1px 3px rgba(0,0,0,0.15); /* Small shadow for flag */
-            z-index: 10; /* Ensure it's above other content */
-            display: flex; /* Use flex to center globe if it's text */
-            align-items: center;
-            justify-content: center;
-        }
-
-        .flag-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* Cover the container without distortion */
-        }
-        /* Emoji flag fallback */
-        .flag-container span {
-            font-size: 24px; /* Adjust size for emoji */
-            line-height: 1;
-        }
-
+        /* Removed .flag-container styles as per user request */
 
         .proxy-type-tag { /* Renamed from tag to proxy-type-tag */
             position: absolute;
@@ -170,9 +147,8 @@
             word-break: break-all; /* Ensures long hostnames wrap */
             color: #00567e; /* Darker blue for host:port */
             font-weight: 600;
-            /* Add padding-right to prevent overlap with flag on the right */
-            padding-right: 45px; /* Adjust as needed based on flag size and desired spacing */
-            /* Add padding-left to prevent overlap with type tag on the left */
+            /* Adjusted padding since flag is removed */
+            padding-right: 0; 
             padding-left: 60px; /* Adjust as needed based on tag size and desired spacing */
         }
 
@@ -223,6 +199,11 @@
         .proxy-actions button:hover {
             background-color: #d0d0d0;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* Styling for Font Awesome icons within buttons */
+        .proxy-actions button i {
+            margin-left: 8px; /* Space between icon and text for RTL */
         }
 
         .loading-message {
@@ -424,19 +405,7 @@
             border: 1px solid #eee;
             border-radius: 8px;
         }
-        .config-instructions {
-            background-color: #f0f8ff; /* Light blue background for instructions */
-            border-left: 5px solid #0088cc; /* Blue left border */
-            padding: 15px;
-            margin-top: 15px;
-            border-radius: 8px;
-            font-size: 13px;
-            color: #333;
-            line-height: 1.6;
-        }
-        .config-instructions strong {
-            color: #00567e;
-        }
+        /* Removed .config-instructions styles as per user request */
 
         /* New styles for test result display */
         .test-result-display {
@@ -476,8 +445,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🔒 لیست نقاط اتصال امن</h1> <!-- Changed h1 text -->
-            <button class="refresh-button" id="updateButton">⟳ بروزرسانی لیست</button>
+            <h1><i class="fas fa-lock"></i> لیست نقاط اتصال امن</h1> <!-- Changed icon -->
+            <button class="refresh-button" id="updateButton"><i class="fas fa-sync-alt"></i> بروزرسانی لیست</button> <!-- Changed icon -->
             <div class="info-bar">
                 <span id="proxyCount">تعداد کل کانفیگ‌ها: 0</span>
                 <span id="lastUpdatedDate">آخرین بروزرسانی: --:--</span>
@@ -504,7 +473,7 @@
                     <!-- Options will be populated by JavaScript -->
                 </select>
             </div>
-            <button class="refresh-button" id="copyAllButton" style="background-color: #0088cc; margin-top: 0; display: none;">📋 کپی همه کانفیگ‌ها</button> <!-- Hidden by default -->
+            <button class="refresh-button" id="copyAllButton" style="background-color: #0088cc; margin-top: 0; display: none;"><i class="fas fa-copy"></i> کپی همه کانفیگ‌ها</button> <!-- Changed icon and hidden by default -->
         </div>
 
         <!-- Progress and Timer Section -->
@@ -556,6 +525,7 @@
         ];
 
         // Mapping of country names (exactly as returned by getCountry) to 2-letter ISO codes for flags
+        // This map is now only used for displaying Persian country names in the filter dropdown.
         const countryCodeMap = {
             "Albania": "al", "Argentina": "ar", "Armenia": "am", "Australia": "au", "Austria": "at",
             "Azerbaijan": "az", "Bahrain": "bh", "Belgium": "be", "Bolivia": "bo",
@@ -925,7 +895,8 @@
 
             } catch (error) {
                 console.error('Error during config test:', error);
-                resultDisplayElement.innerHTML = `خطا در تست کانفیگ: ${error.message}.`;
+                // Changed error message as per user request
+                resultDisplayElement.innerHTML = "قابلیت تست کانفیگ غیرفعال است.";
                 resultDisplayElement.className = 'test-result-display show error';
             }
         }
@@ -1143,7 +1114,8 @@
             // Parse config for display title and details
             const { displayTitle, displayDetails } = parseV2rayConfigForDisplay(item.config);
 
-            // Flag container
+            // Removed Flag container as per user request
+            /*
             const flagContainer = document.createElement('div');
             flagContainer.className = 'flag-container';
             const countryCode = countryCodeMap[item.country.toLowerCase()]; // Get 2-letter code from map
@@ -1155,9 +1127,8 @@
                     this.onerror = null;
                     // Fallback to emoji if image fails
                     const emojiSpan = document.createElement('span');
-                    // Simple emoji mapping for common flags, or a generic globe
                     const emojiMap = {
-                        "us": "🇺🇸", "de": "�🇪", "🇫🇷": "🇫🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
+                        "us": "🇺🇸", "de": "🇩🇪", "🇫🇷": "�🇷", "jp": "🇯🇵", "cn": "🇨🇳", "ru": "🇷🇺", "ir": "🇮🇷", "ca": "🇨🇦", "gb": "🇬🇧", "au": "🇦🇺",
                         "ae": "🇦🇪", "nl": "🇳🇱", "sg": "🇸🇬", "in": "🇮🇳", "br": "🇧🇷", "ua": "🇺🇦", "tr": "🇹🇷", "se": "🇸🇪", "fi": "🇫🇮", "no": "🇳🇴",
                         "ch": "🇨🇭", "es": "🇪🇸", "it": "🇮🇹", "pl": "🇵🇱", "cz": "🇨🇿", "za": "🇿🇦", "kr": "🇰🇷", "hk": "🇭🇰", "id": "🇮🇩", "vn": "🇻🇳",
                         "th": "🇹🇭", "my": "🇲🇾", "ph": "🇵🇭", "mx": "🇲🇽", "ar": "🇦🇷", "cl": "🇨🇱", "co": "🇨🇴", "pe": "🇵🇪", "eg": "🇪🇬", "sa": "🇸🇦",
@@ -1180,6 +1151,7 @@
                 flagContainer.appendChild(unknownSpan);
             }
             card.appendChild(flagContainer);
+            */
 
             // Proxy Type Tag
             const typeTag = document.createElement('span');
@@ -1206,7 +1178,7 @@
 
             // Test Config button
             const testButton = document.createElement('button');
-            testButton.textContent = '⚡ تست کانفیگ';
+            testButton.innerHTML = '<i class="fas fa-bolt"></i> تست کانفیگ'; // Font Awesome icon
             // Create a dedicated div for test results for this card
             const testResultDisplay = document.createElement('div');
             testResultDisplay.className = 'test-result-display'; // Apply initial styling
@@ -1218,7 +1190,7 @@
 
             // Copy to clipboard button
             const copyButton = document.createElement('button');
-            copyButton.textContent = '📋 کپی لینک';
+            copyButton.innerHTML = '<i class="fas fa-copy"></i> کپی لینک'; // Font Awesome icon
             copyButton.onclick = () => {
                 copyToClipboard(item.config);
             };
@@ -1226,7 +1198,7 @@
 
             // QR code button
             const qrButton = document.createElement('button');
-            qrButton.textContent = '📸 نمایش QR کد';
+            qrButton.innerHTML = '<i class="fas fa-qrcode"></i> نمایش QR کد'; // Font Awesome icon
             qrButton.onclick = () => {
                 showQrCode(item.config);
             };
@@ -1438,4 +1410,3 @@
     </script>
 </body>
 </html>
-�
