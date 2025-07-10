@@ -200,11 +200,6 @@
             border: none;
         }
 
-        .proxy-actions a {
-            background-color: #0088cc;
-            color: #fff;
-        }
-
         .proxy-actions a:hover {
             background-color: #006699;
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
@@ -424,7 +419,82 @@
             border: 1px solid #eee;
             border-radius: 8px;
         }
-        /* Removed .config-instructions styles as per user request */
+        /* New styles for LLM Explanation Modal */
+        .llm-modal {
+            position: fixed;
+            z-index: 1002; /* Higher than QR modal */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .llm-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .llm-modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            position: relative;
+            text-align: right; /* Align text right for Persian */
+            max-width: 500px; /* Wider for text */
+            width: 90%;
+            max-height: 80%; /* Limit height */
+            overflow-y: auto; /* Scroll if content is too long */
+        }
+        .llm-modal-close {
+            color: #aaa;
+            position: absolute;
+            top: 10px;
+            left: 15px; /* Position close button on left for RTL */
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        .llm-modal-close:hover,
+        .llm-modal-close:focus {
+            color: #000;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .llm-modal-content h3 {
+            margin-top: 0;
+            color: #0088cc;
+            font-size: 22px;
+            margin-bottom: 15px;
+            text-align: center; /* Center title */
+        }
+        .llm-explanation-text {
+            font-size: 15px;
+            color: #333;
+            line-height: 1.6;
+            white-space: pre-wrap; /* Preserve whitespace and line breaks */
+            text-align: justify; /* Justify text for better readability */
+        }
+        .llm-loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0088cc;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: block;
+        }
+
 
         /* New styles for test result display */
         .test-result-display {
@@ -525,6 +595,16 @@
             </div>
         </div>
 
+        <!-- LLM Explanation Modal Structure -->
+        <div id="llmModal" class="llm-modal">
+            <div class="llm-modal-content">
+                <button id="llmModalClose" class="llm-modal-close">✖</button>
+                <h3>توضیح کانفیگ با هوش مصنوعی</h3>
+                <div id="llmExplanationSpinner" class="llm-loading-spinner"></div>
+                <p id="llmExplanationText" class="llm-explanation-text"></p>
+            </div>
+        </div>
+
         <footer>ساخته‌شده با ❤️ توسط شما</footer>
     </div>
 
@@ -576,6 +656,35 @@
             "us": "ایالات متحده",
             "vn": "ویتنام", "unknown": "نامعلوم"
         };
+        
+        // New: Mapping of 2-letter ISO codes to Persian country names for display in filters
+        const countryNamesFa = {
+            "al": "آلبانی", "ar": "آرژانتین", "am": "ارمنستان", "au": "استرالیا", "at": "اتریش",
+            "az": "آذربایجان", "bh": "بحرین", "be": "بلژیک", "bo": "بولیوی",
+            "ba": "بوسنی و هرزگوین",
+            "br": "برزیل", "bg": "بلغارستان", "ca": "کانادا", "cl": "شیلی", "cn": "چین", "co": "کلمبیا",
+            "cr": "کاستاریکا",
+            "hr": "کرواسی", "cy": "قبرس", "cz": "جمهوری چک",
+            "dk": "دانمارک", "ec": "اکوادور", "ee": "استونی", "fi": "فنلاند", "fr": "فرانسه", "de": "آلمان",
+            "gi": "جبل‌الطارق", "gr": "یونان", "hk": "هنگ کنگ",
+            "hu": "مجارستان", "is": "ایسلند", "in": "هند", "id": "اندونزی", "ir": "ایران", "ie": "ایرلند", "il": "اسرائیل",
+            "it": "ایتالیا", "jp": "ژاپن", "kz": "قزاقستان", "lv": "لتونی", "lt": "لیتوانی", "lu": "لوکزامبورگ", "my": "مالزی", "mt": "مالت",
+            "mu": "موریس", "mx": "مکزیک", "md": "مولداوی",
+            "nz": "نیوزلند",
+            "mk": "مقدونیه شمالی",
+            "no": "نروژ", "py": "پاراگوئه", "pl": "لهستان", "pt": "پرتغال", "pr": "پورتوریکو", "ro": "رومانی",
+            "ru": "روسیه", "rs": "صربستان", "sc": "سیشل", "sg": "سنگاپور", "sk": "اسلواکی", "si": "اسلوونی",
+            "za": "آفریقای جنوبی",
+            "kr": "کره جنوبی",
+            "es": "اسپانیا", "se": "سوئد", "ch": "سوئیس", "tw": "تایوان",
+            "th": "تایلند",
+            "nl": "هلند",
+            "tr": "ترکیه", "ua": "اوکراین",
+            "ae": "امارات متحده عربی",
+            "gb": "بریتانیا",
+            "us": "ایالات متحده",
+            "vn": "ویتنام", "unknown": "نامعلوم"
+        };
 
 
         // DOM elements
@@ -598,6 +707,13 @@
         const qrModalClose = document.getElementById('qrModalClose');
         const qrCanvas = document.getElementById('qrCanvas');
         const filterBar = document.querySelector('.filter-bar'); // Get reference to filter bar
+
+        // LLM Explanation Modal elements
+        const llmModal = document.getElementById('llmModal');
+        const llmModalClose = document.getElementById('llmModalClose');
+        const llmExplanationText = document.getElementById('llmExplanationText');
+        const llmExplanationSpinner = document.getElementById('llmExplanationSpinner');
+
 
         let allConfigurations = [];
         let filteredConfigurations = [];
@@ -775,7 +891,7 @@
             const lowerCaseConfig = config.toLowerCase();
             for (const country of countries) {
                 // Check for full country name (with spaces) in the config string
-                if (lowerCaseLine.includes(country.toLowerCase())) {
+                if (lowerCaseConfig.includes(country.toLowerCase())) {
                     return country; // Return the clean name
                 }
             }
@@ -922,26 +1038,25 @@
          */
         async function fetchContent(urlInfo) {
             const { url, decode } = urlInfo;
+            console.log(`Fetching from: ${url}, decode: ${decode}`);
             try {
                 const response = await fetch(url);
                 if (!response.ok) {
                     let errorMessage = `Error fetching ${url}: HTTP Status ${response.status}`;
-                    if (response.status === 404) {
-                        errorMessage += ` - فایل یافت نشد (404 Not Found). این URL ممکن است حذف شده یا تغییر کرده باشد.`;
-                    } else {
-                        errorMessage += ` - ${response.statusText}`;
-                    }
                     console.error(errorMessage);
                     return [];
                 }
                 let text = await response.text();
+                // console.log(`Raw text from ${url}: ${text.substring(0, Math.min(text.length, 200))}...`); // Log first 200 chars
 
                 let linesToProcess = [];
 
                 if (decode) {
                     try {
                         // First level decode: the entire file content is Base64 encoded
-                        text = atob(text);
+                        const decodedFullText = atob(text);
+                        // console.log(`Full text decoded (if applicable): ${decodedFullText.substring(0, Math.min(decodedFullText.length, 200))}...`);
+                        text = decodedFullText;
                     } catch (e) {
                         console.warn(`Warning: Initial Base64 decoding failed for ${url}. Attempting to use raw content. Error:`, e);
                         // If initial decode fails, treat as direct content
@@ -950,6 +1065,7 @@
                 
                 // Split by lines
                 const rawLines = text.split('\n').map(line => line.trim()).filter(line => line !== '');
+                console.log(`Number of raw lines from ${url} after initial processing: ${rawLines.length}`);
 
                 for (const line of rawLines) {
                     const lowerCaseLine = line.toLowerCase();
@@ -961,24 +1077,33 @@
                         lowerCaseLine.startsWith('ssr://') ||
                         lowerCaseLine.startsWith('warp://')) {
                         linesToProcess.push(line);
+                        // console.log(`Direct protocol line found: ${line.substring(0, Math.min(line.length, 50))}...`);
                     } else {
                         // Otherwise, try to Base64 decode the line itself and then detect protocol
                         try {
                             const decodedLine = atob(line);
                             const decodedLowerCaseLine = decodedLine.toLowerCase();
+                            // console.log(`Line Base64 decoded: ${decodedLine.substring(0, Math.min(decodedLine.length, 100))}...`);
+
                             // Check if the decoded line starts with any known protocol
                             if (decodedLowerCaseLine.startsWith('vmess://')) {
                                 linesToProcess.push(decodedLine);
+                                // console.log(`Decoded line is VMess: ${decodedLine.substring(0, Math.min(decodedLine.length, 50))}...`);
                             } else if (decodedLowerCaseLine.startsWith('vless://')) {
                                 linesToProcess.push(decodedLine);
+                                // console.log(`Decoded line is VLess: ${decodedLine.substring(0, Math.min(decodedLine.length, 50))}...`);
                             } else if (decodedLowerCaseLine.startsWith('trojan://')) {
                                 linesToProcess.push(decodedLine);
+                                // console.log(`Decoded line is Trojan: ${decodedLine.substring(0, Math.min(decodedLine.length, 50))}...`);
                             } else if (decodedLowerCaseLine.startsWith('ss://')) {
                                 linesToProcess.push(decodedLine);
+                                // console.log(`Decoded line is SS: ${decodedLine.substring(0, Math.min(decodedLine.length, 50))}...`);
                             } else if (decodedLowerCaseLine.startsWith('ssr://')) {
                                 linesToProcess.push(decodedLine);
+                                // console.log(`Decoded line is SSR: ${decodedLine.substring(0, Math.min(decodedLine.length, 50))}...`);
                             } else if (decodedLowerCaseLine.startsWith('warp://')) {
                                 linesToProcess.push(decodedLine);
+                                // console.log(`Decoded line is WARP: ${decodedLine.substring(0, Math.min(decodedLine.length, 50))}...`);
                             } else {
                                 // If it's a raw Base64 JSON (like the user's example), try to parse it
                                 // and prepend 'vmess://' if it looks like a VMess JSON
@@ -988,10 +1113,11 @@
                                     if (jsonConfig.v && jsonConfig.ps && jsonConfig.add && jsonConfig.port && jsonConfig.id) {
                                         // Re-encode to Base64 and prepend vmess://
                                         // Use encodeURIComponent and unescape for Unicode characters before btoa
-                                        linesToProcess.push(`vmess://${btoa(unescape(encodeURIComponent(decodedLine)))}`);
+                                        const finalConfigString = `vmess://${btoa(unescape(encodeURIComponent(decodedLine)))}`;
+                                        linesToProcess.push(finalConfigString);
+                                        // console.log(`Decoded line is VMess JSON, added: ${finalConfigString.substring(0, Math.min(finalConfigString.length, 50))}...`);
                                     } else {
-                                        // Still unknown, discard or log
-                                        console.warn(`Unknown decoded line format (not a recognized protocol or VMess JSON): ${decodedLine.substring(0, Math.min(decodedLine.length, 100))}...`);
+                                        // console.warn(`Unknown decoded line format (not a recognized protocol or VMess JSON): ${decodedLine.substring(0, Math.min(decodedLine.length, 100))}...`);
                                     }
                                 } catch (jsonParseError) {
                                     // Not a valid JSON, discard
@@ -1004,6 +1130,7 @@
                         }
                     }
                 }
+                console.log(`Total configs found in ${url}: ${linesToProcess.length}`);
                 
                 return linesToProcess.map(config => {
                     let detectedCountry = getCountry(config);
@@ -1126,16 +1253,15 @@
 
             // Populate country filter
             const sortedCountries = Object.keys(countryCounts).sort((a, b) => {
-                const nameA = countryNamesFa[countryCodeMap[a.toLowerCase()]] || a;
-                const nameB = countryNamesFa[countryCodeMap[b.toLowerCase()]] || b;
+                const nameA = countryNamesFa[a.toLowerCase()] || a; // Use `a.toLowerCase()` as key for countryNamesFa
+                const nameB = countryNamesFa[b.toLowerCase()] || b; // Use `b.toLowerCase()` as key for countryNamesFa
                 return nameA.localeCompare(nameB, 'fa', { sensitivity: 'base' });
             });
 
             sortedCountries.forEach(countryName => {
                 const option = document.createElement('option');
                 option.value = countryName;
-                const displayCountryCode = countryCodeMap[countryName.toLowerCase()];
-                const displayCountryName = countryNamesFa[displayCountryCode] || countryName;
+                const displayCountryName = countryNamesFa[countryName.toLowerCase()] || countryName; // Use countryName.toLowerCase() for lookup
                 option.textContent = `${displayCountryName} (${countryCounts[countryName]})`;
                 countryFilterSelect.appendChild(option);
             });
@@ -1172,6 +1298,7 @@
                 return matchesProtocol && matchesCountry && matchesNational;
             });
 
+            console.log(`Filtered configurations count: ${filteredConfigurations.length}`);
             // Reset current index and clear display before loading filtered results
             proxiesDiv.innerHTML = '';
             currentProxyIndex = 0;
@@ -1249,6 +1376,14 @@
             };
             actionsDiv.appendChild(qrButton);
 
+            // LLM Explain button
+            const llmExplainButton = document.createElement('button');
+            llmExplainButton.innerHTML = '<i class="fas fa-magic"></i> ✨ توضیح کانفیگ'; // Sparkle icon for LLM feature
+            llmExplainButton.onclick = () => {
+                explainConfig(item.config);
+            };
+            actionsDiv.appendChild(llmExplainButton);
+
             card.appendChild(actionsDiv);
             card.appendChild(testResultDisplay); // Append the test result display div here
 
@@ -1279,9 +1414,12 @@
             isLoading = true;
             loadingMoreDiv.style.display = 'block';
             loadingMoreDiv.textContent = 'در حال بارگذاری نقاط اتصال بیشتر...';
+            console.log(`Loading batch of proxies. Current index: ${currentProxyIndex}, Filtered count: ${filtered.length}`);
 
             const endIndex = Math.min(currentProxyIndex + proxiesPerLoad, filtered.length);
             const batch = filtered.slice(currentProxyIndex, endIndex);
+            console.log(`Batch size: ${batch.length}`);
+
 
             const fragment = document.createDocumentFragment();
             
@@ -1344,6 +1482,59 @@
             }
         });
 
+        /**
+         * Explains a V2Ray/Xray config using the Gemini API (LLM).
+         * @param {string} configString - The config string to explain.
+         */
+        async function explainConfig(configString) {
+            llmExplanationText.textContent = ''; // Clear previous explanation
+            llmExplanationSpinner.style.display = 'block'; // Show spinner
+            llmModal.classList.add('show'); // Show the modal
+
+            try {
+                let chatHistory = [];
+                const prompt = `این یک کانفیگ V2Ray/Xray است: \`${configString}\`. لطفاً آن را به زبان فارسی ساده توضیح دهید، شامل پروتکل، آدرس، پورت و نوع شبکه. همچنین به طور خلاصه بگویید این کانفیگ برای چه کاری استفاده می شود. پاسخ را به صورت متنی و خوانا ارائه دهید.`;
+                chatHistory.push({ role: "user", parts: [{ text: prompt }] });
+
+                const payload = { contents: chatHistory };
+                const apiKey = ""; // Canvas will automatically provide it in runtime
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+
+                if (result.candidates && result.candidates.length > 0 &&
+                    result.candidates[0].content && result.candidates[0].content.parts &&
+                    result.candidates[0].content.parts.length > 0) {
+                    const text = result.candidates[0].content.parts[0].text;
+                    llmExplanationText.textContent = text;
+                } else {
+                    llmExplanationText.textContent = 'خطا در دریافت توضیح از هوش مصنوعی. لطفاً دوباره تلاش کنید.';
+                    console.error('Unexpected API response structure:', result);
+                }
+            } catch (error) {
+                llmExplanationText.textContent = 'خطا در برقراری ارتباط با هوش مصنوعی. لطفاً اتصال اینترنت خود را بررسی کنید.';
+                console.error('Error calling Gemini API:', error);
+            } finally {
+                llmExplanationSpinner.style.display = 'none'; // Hide spinner
+            }
+        }
+
+        llmModalClose.addEventListener('click', () => {
+            llmModal.classList.remove('show');
+        });
+
+        llmModal.addEventListener('click', (event) => {
+            if (event.target === llmModal) {
+                llmModal.classList.remove('show');
+            }
+        });
+
 
         /**
          * Formats time for display (MM:SS).
@@ -1402,6 +1593,7 @@
                 uniqueConfigsMap.set(item.config, item);
             });
             allConfigurations = Array.from(uniqueConfigsMap.values());
+            console.log(`Total unique configurations after fetch: ${allConfigurations.length}`);
             
             saveConfigsToLocalStorage(allConfigurations);
             updateFiltersAndCounts();
@@ -1423,28 +1615,41 @@
             }, 2000);
         }
 
-        // Event listeners
-        protocolFilterSelect.addEventListener('change', applyFilters);
-        countryFilterSelect.addEventListener('change', applyFilters);
-        nationalFilterCheckbox.addEventListener('change', applyFilters); // New: Add event listener for national filter
-        updateButton.addEventListener('click', () => fetchAllConfigs(true)); // Force fetch on button click
-        copyAllButton.addEventListener('click', () => {
-            if (filteredConfigurations.length > 0) {
-                const allText = filteredConfigurations.map(item => item.config).join('\n');
-                copyToClipboard(allText);
-            } else {
-                showGlobalMessage('کانفیگی برای کپی کردن وجود ندارد.', 'error');
+        // Event listeners (moved inside DOMContentLoaded for safety)
+        // window.onload is replaced by DOMContentLoaded for better practice.
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('DOM Content Loaded. Initializing...');
+            // Add a check for countryNamesFa and countryCodeMap before using them
+            if (typeof countryNamesFa === 'undefined') {
+                console.error("countryNamesFa is not defined. Please ensure it's declared globally or within scope.");
+                // Potentially define a fallback or halt execution if critical
             }
-        });
-        window.addEventListener('scroll', handleScroll);
+            if (typeof countryCodeMap === 'undefined') {
+                console.error("countryCodeMap is not defined. Please ensure it's declared globally or within scope.");
+                // Potentially define a fallback or halt execution if critical
+            }
 
-        // Initial load logic
-        window.onload = () => {
+            // Event listeners
+            protocolFilterSelect.addEventListener('change', applyFilters);
+            countryFilterSelect.addEventListener('change', applyFilters);
+            nationalFilterCheckbox.addEventListener('change', applyFilters);
+            updateButton.addEventListener('click', () => fetchAllConfigs(true));
+            copyAllButton.addEventListener('click', () => {
+                if (filteredConfigurations.length > 0) {
+                    const allText = filteredConfigurations.map(item => item.config).join('\n');
+                    copyToClipboard(allText);
+                } else {
+                    showGlobalMessage('کانفیگی برای کپی کردن وجود ندارد.', 'error');
+                }
+            });
+            window.addEventListener('scroll', handleScroll);
+
+            // Initial load logic
             updateLastUpdatedTime();
             if (!loadConfigsFromLocalStorage()) {
-                fetchAllConfigs(true); // If no valid cache, force a fetch
+                fetchAllConfigs(true);
             }
-        };
+        });
     </script>
 </body>
 </html>
